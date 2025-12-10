@@ -359,15 +359,16 @@ class RoutineDetailPage extends Page {
         // Dismiss keyboard first if it's open
         try {
             const notesLabel = $('//XCUIElementTypeStaticText[@label="Notes"]');
-            await notesLabel.click();
+            await notesLabel.doubleClick();
             await browser.pause(400);
         } catch (e) {
         }
         
         const saveButtonSelector = '//XCUIElementTypeOther[@label="Create Workout Day" or @label="Update Workout Day"]';
-        const saveButton = $(saveButtonSelector);
-        await saveButton.scrollIntoView({maxScrolls: 3, direction: 'up'});
-        await browser.pause(1000);
+        let saveButton = $(saveButtonSelector);
+        await saveButton.scrollIntoView();
+        await browser.pause(1500);
+        saveButton = $(saveButtonSelector);
         await saveButton.waitForExist({ timeout: 5000 });
         await expect(saveButton).toBeEnabled({ wait: 5000 });
         await saveButton.click();

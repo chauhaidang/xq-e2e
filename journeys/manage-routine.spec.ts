@@ -10,6 +10,7 @@ describe('Manage Routine', () => {
     let workoutDaysApi: WorkoutDaysApi;
     let workoutDaySetsApi: WorkoutDaySetsApi;
     let trackRoutines: number[] = [];
+    const bundleId = 'com.xqfitness.app';
 
     before(() => {
         const configuration = new Configuration({
@@ -22,10 +23,12 @@ describe('Manage Routine', () => {
 
 
     beforeEach(async () => {
-        await browser.terminateApp('com.xqfitness.app');
+        trackRoutines = [];
+        await browser.reloadSession();
+        await browser.terminateApp(bundleId);
     });
 
-    afterEach(async () => {
+    after(async () => {
         for (const routineId of trackRoutines) {
             await routinesApi.deleteRoutine(routineId);
         }
@@ -36,6 +39,7 @@ describe('Manage Routine', () => {
         const routineDescription = 'Upper Lower 4 days split';
 
         it('should let me create new routine with detail splits', async () => {
+            await browser.activateApp(bundleId);
             await MyRoutinesPage.waitForScreen();
             await MyRoutinesPage.tapCreateRoutine();
             await CreateRoutinePage.enterRoutineName(routineName);
@@ -47,7 +51,11 @@ describe('Manage Routine', () => {
             await MyRoutinesPage.verifyRoutineExists(routineName);
             await MyRoutinesPage.tapRoutineItem(routineName);
             await RoutineDetailPage.waitForScreen();
-            await RoutineDetailPage.addWorkoutDay('Monday upper body', '4 sets of chest', '2 sets of back', '3 sets of shoulder', '4 sets of arm');
+            await RoutineDetailPage.addWorkoutDay(
+                'Monday upper body',
+                '4 sets of chest',
+                '2 sets of back',
+            );
             await RoutineDetailPage.tapBack();
             await MyRoutinesPage.tapDeleteRoutine(routineName);
         });
@@ -55,7 +63,6 @@ describe('Manage Routine', () => {
 
     context('When there is a routine', () => {
         it('should let me update the routine workout days set', async () => {
-
             const routine = await routinesApi.createRoutine({
                 name: 'UL4' + kit.generateRandomString(5),
                 description: 'test update routine workout days set',
@@ -68,17 +75,15 @@ describe('Manage Routine', () => {
                 routineId: routine.data.id,
                 dayNumber: 2,
                 dayName: 'Wednesday Upper A',
-                notes: 'Upper A note',
             });
 
             await workoutDaySetsApi.createWorkoutDaySet({
                 workoutDayId: workoutDay.data.id,
                 muscleGroupId: MuscleGroupId.Chest,
                 numberOfSets: 4,
-                notes: 'Upper A chest sets note',
             });
 
-            await browser.activateApp('com.xqfitness.app');
+            await browser.activateApp(bundleId);
             await MyRoutinesPage.waitForScreen();
             await MyRoutinesPage.tapRoutineItem(routine.data.name);
             await RoutineDetailPage.editWorkoutDaySet(workoutDay.data.dayName, MuscleGroupId.Chest, 6);

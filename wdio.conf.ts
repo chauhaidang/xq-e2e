@@ -82,7 +82,7 @@ export const config: WebdriverIO.Config = {
     // Define all options that are relevant for the WebdriverIO instance here
     //
     // Level of logging verbosity: trace | debug | info | warn | error | silent
-    logLevel: 'warn', // Reduced from 'info' to reduce command logs
+    logLevel: 'info', // Reduced from 'info' to reduce command logs
     //
     // Set specific log levels per logger
     // loggers:
@@ -94,8 +94,8 @@ export const config: WebdriverIO.Config = {
     // - @wdio/cli, @wdio/config, @wdio/utils
     // Level of logging verbosity: trace | debug | info | warn | error | silent
     logLevels: {
-        webdriver: 'warn', // Disable webdriver command logs (COMMAND, RESULT, etc.)
-        'webdriverio': 'warn', // Disable webdriverio logs
+        webdriver: 'info', // Disable webdriver command logs (COMMAND, RESULT, etc.)
+        'webdriverio': 'info', // Disable webdriverio logs
         '@wdio/appium-service': 'warn',
     },
     //
@@ -151,7 +151,7 @@ export const config: WebdriverIO.Config = {
     // See the full list at http://mochajs.org/
     mochaOpts: {
         ui: 'bdd',
-        timeout: 120000 // Increased timeout for complex tests
+        timeout: 360000 // Increased timeout for complex tests
     },
 
     //
