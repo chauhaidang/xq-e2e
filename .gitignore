@@ -1,0 +1,8 @@
+node_modules/
+*.app/
+generated-clients/
+page-source.xml
+screenshot.png
+nginx-gateway.conf
+dom-captures/
+xq-compose.yml

@@ -1,0 +1,22 @@
+{
+  "name": "e2e",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@wdio/cli": "^9.21.1",
+    "@wdio/globals": "^9.17.0",
+    "@wdio/local-runner": "^9.21.0",
+    "@wdio/mocha-framework": "^9.21.0",
+    "@wdio/spec-reporter": "^9.20.0",
+    "appium-xcuitest-driver": "^10.9.0",
+    "axios": "^1.13.2",
+    "expect-webdriverio": "^5.5.0",
+    "xq-fitness-read-client": "file:./generated-clients/read-service",
+    "xq-fitness-write-client": "file:./generated-clients/write-service",
+    "@chauhaidang/xq-js-common-kit": "1.0.7"
+  },
+  "scripts": {
+    "wdio": "wdio run ./wdio.conf.ts",
+    "analyze-dom": "tsx scripts/analyze-dom-trees.ts"
+  }
+}
