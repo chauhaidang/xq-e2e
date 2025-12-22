@@ -1,9 +1,9 @@
-import MyRoutinesPage from '../pageobjects/my-routines.page.js';
-import CreateRoutinePage from '../pageobjects/create-routine.page.js';
-import RoutineDetailPage from '../pageobjects/routine-detail.page.js';
+import RoutineTasks from './tasks/routine.tasks.js';
+import WorkoutDayTasks from './tasks/workout-day.tasks.js';
+import RoutineDetailPage from './page-objects/routine-detail.page.js';
 import * as kit from '@chauhaidang/xq-js-common-kit';
 import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi} from 'xq-fitness-write-client';
-import { MuscleGroupId } from '../utils/muscle-group-id.enum.js';
+import { MuscleGroupId } from '../support/utils/muscle-group-id.enum.js';
 
 describe('Manage Routine', () => {
     let routinesApi: RoutinesApi;
@@ -40,24 +40,16 @@ describe('Manage Routine', () => {
 
         it('should let me create new routine with detail splits', async () => {
             await browser.activateApp(bundleId);
-            await MyRoutinesPage.waitForScreen();
-            await MyRoutinesPage.tapCreateRoutine();
-            await CreateRoutinePage.enterRoutineName(routineName);
-            await CreateRoutinePage.enterRoutineDescription(routineDescription);
-            await CreateRoutinePage.verifyToggleIsActive();
-            await CreateRoutinePage.tapCreate();
-            await CreateRoutinePage.closePopup();
-            await MyRoutinesPage.waitForScreen();
-            await MyRoutinesPage.verifyRoutineExists(routineName);
-            await MyRoutinesPage.tapRoutineItem(routineName);
-            await RoutineDetailPage.waitForScreen();
-            await RoutineDetailPage.addWorkoutDay(
+            await RoutineTasks.createRoutine(routineName, routineDescription);
+            await RoutineTasks.verifyRoutineExists(routineName);
+            await WorkoutDayTasks.addWorkoutDay(
+                routineName,
                 'Monday upper body',
                 '4 sets of chest',
                 '2 sets of back',
             );
             await RoutineDetailPage.tapBack();
-            await MyRoutinesPage.tapDeleteRoutine(routineName);
+            await RoutineTasks.deleteRoutine(routineName);
         });
     });
 
@@ -84,10 +76,8 @@ describe('Manage Routine', () => {
             });
 
             await browser.activateApp(bundleId);
-            await MyRoutinesPage.waitForScreen();
-            await MyRoutinesPage.tapRoutineItem(routine.data.name);
-            await RoutineDetailPage.editWorkoutDaySet(workoutDay.data.dayName, MuscleGroupId.Chest, 6);
-            await RoutineDetailPage.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6);
+            await WorkoutDayTasks.editWorkoutDaySet(routine.data.name, workoutDay.data.dayName, MuscleGroupId.Chest, 6);
+            await WorkoutDayTasks.verifyWorkoutDaySet(routine.data.name, workoutDay.data.dayName, 'Chest', 6);
         });
     });
 });

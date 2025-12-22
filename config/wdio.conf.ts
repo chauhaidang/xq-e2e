@@ -1,4 +1,4 @@
-import * as fs from 'node:fs'
+import { testHooks } from '../support/hooks/test-hooks.js';
 
 export const config: WebdriverIO.Config = {
     //
@@ -7,7 +7,7 @@ export const config: WebdriverIO.Config = {
     // ====================
     // WebdriverIO supports running e2e tests as well as unit and component tests.
     runner: 'local',
-    tsConfigPath: './tsconfig.json',
+    tsConfigPath: '../tsconfig.json',
     
     //
     // ====================
@@ -36,7 +36,7 @@ export const config: WebdriverIO.Config = {
     // of the config file unless it's absolute.
     //
     specs: [
-       './journeys/**/*.spec.ts'
+       '../tests/**/*.spec.ts'
     ],
     // Patterns to exclude.
     exclude: [
@@ -67,12 +67,12 @@ export const config: WebdriverIO.Config = {
     capabilities: [{
         // capabilities for local Appium native app tests on iOS
         platformName: 'iOS',
-        'appium:deviceName': 'iPhone SE (3rd generation)',
         'appium:platformVersion': '18.3',
         'appium:automationName': 'XCUITest',
         'appium:app': './XQFitness.app',
         "appium:fullReset": false,
         "appium:noReset": true,
+        "appium:udid": "9D4D7315-746B-47BF-A531-2B2E0E9EDD7D",
     }],
 
     //
@@ -248,24 +248,7 @@ export const config: WebdriverIO.Config = {
      * @param {boolean} result.passed    true if test has passed, otherwise false
      * @param {object}  result.retries   information about spec related retries, e.g. `{ attempts: 0, limit: 0 }`
      */
-    afterTest: async function(test, context, { error, result, duration, passed, retries }) {
-        // Healing mechanism: Print DOM tree when test fails to help identify correct locators
-        if (!passed && error) {
-            const { browser } = await import('@wdio/globals');
-            try {
-                const pageSource = await browser.getPageSource();
-                console.log('\n========== HEALING MECHANISM: PAGE SOURCE (DOM TREE) ==========');
-                console.log('Test failed. Below is the current page source to help identify correct locators:');
-                console.log('================================================================');
-                fs.writeFileSync('./page-source.xml', pageSource);
-                const image = await browser.takeScreenshot();
-                fs.writeFileSync('./screenshot.png', Buffer.from(image, 'base64'));
-                console.log('================================================================\n');
-            } catch (err) {
-                console.log('Could not retrieve page source:', err);
-            }
-        }
-    },
+    afterTest: testHooks.afterTest,
 
 
     /**

@@ -23,7 +23,7 @@ export default class Page {
         const pageSource = await this.getPageSource();
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `dom-tree-${screenName}-${timestamp}.xml`;
-        const filepath = path.join(process.cwd(), 'dom-captures', filename);
+        const filepath = path.join(process.cwd(), 'artifacts', 'dom-captures', filename);
         
         // Ensure directory exists
         const dir = path.dirname(filepath);
@@ -46,3 +46,4 @@ export default class Page {
         console.log('============================================\n');
     }
 }
+

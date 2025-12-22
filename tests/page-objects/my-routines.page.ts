@@ -1,73 +1,21 @@
-import { $, $$, expect } from '@wdio/globals'
+import { $, expect, browser } from '@wdio/globals';
+import MyRoutinesObjects from './objects/my-routines.objects.js';
+import RoutineListObjects from './objects/routine-list.objects.js';
 import Page from './page.js';
 
 /**
  * Page object for the "My Routines" screen
+ * Uses composition pattern: composes objects instance and contains action methods
+ * @internal
  */
 class MyRoutinesPage extends Page {
-    /**
-     * Define selectors using accessibility identifiers
-     */
-    public get screenTitle() {
-        return $('~My Routines');
-    }
-
-    public get createRoutineButton() {
-        return $('~create-routine-button');
-    }
-
-    public get routineList() {
-        return $$('~Routine Item');
-    }
-
-    public get routineListScreen() {
-        return $('~routine-list-screen');
-    }
-
-    public get routineListContainer() {
-        return $('~routine-list');
-    }
-
-    /**
-     * Get routine item by index (1-based)
-     * @param index The index of the routine (1, 2, 3, etc.)
-     */
-    public getRoutineItem(index: number) {
-        return $(`~routine-item-${index}`);
-    }
-
-    /**
-     * Get routine item touchable area by index (1-based)
-     * @param index The index of the routine (1, 2, 3, etc.)
-     */
-    public getRoutineItemTouchable(index: number) {
-        return $(`~routine-item-touchable-${index}`);
-    }
-
-    /**
-     * Get edit button for routine by index (1-based)
-     * @param index The index of the routine (1, 2, 3, etc.)
-     */
-    public getEditRoutineButton(index: number) {
-        return $(`~edit-routine-${index}`);
-    }
-
-    /**
-     * Get delete button for routine by name
-     * @param routineName The name of the routine
-     */
-    public getDeleteRoutineButton(routineName: string) {
-        return $(`//*[@label="Delete routine ${routineName}"]`);
-    }
 
     /**
      * Wait for the My Routines screen to be displayed
      */
     public async waitForScreen() {
-        // Wait a bit for the screen to fully render
         await browser.pause(2000);
         
-        // Dismiss any error alerts that might be blocking the screen
         try {
             const alert = await browser.getAlertText();
             if (alert) {
@@ -79,32 +27,31 @@ class MyRoutinesPage extends Page {
             // No alert present, continue
         }
         
-        // Try multiple selectors as fallback
         try {
-            await expect(this.screenTitle).toBeDisplayed({ timeout: 10000 });
+            await expect(MyRoutinesObjects.screenTitle).toBeDisplayed({ wait: 10000 });
         } catch (error) {
-            // Fallback: try waiting for the routine list screen or container
             try {
-                await expect(this.routineListScreen).toBeDisplayed({ timeout: 5000 });
+                await expect(MyRoutinesObjects.routineListScreen).toBeDisplayed({ wait: 5000 });
             } catch {
-                await expect(this.routineListContainer).toBeDisplayed({ timeout: 5000 });
+                await expect(MyRoutinesObjects.routineListContainer).toBeDisplayed({ wait: 5000 });
             }
         }
+        return this;
     }
 
     /**
      * Tap on the Create Routine button
      */
     public async tapCreateRoutine() {
-        await this.createRoutineButton.click();
+        await MyRoutinesObjects.createRoutineButton.click();
+        return this;
     }
 
     /**
      * Get the list of routines
-     * @returns Promise<WebdriverIO.ElementArray> Array of routine elements
      */
     public async getRoutineList() {
-        return await this.routineList;
+        return await MyRoutinesObjects.routineList;
     }
 
     /**
@@ -112,41 +59,34 @@ class MyRoutinesPage extends Page {
      * @param routineName The name of the routine to verify
      */
     public async verifyRoutineExists(routineName: string) {
-        // The routine name appears in the label of routine-item elements
-        // Try to find an element that contains the routine name in its label
-        // This works because routine items have labels like "Morning Workout My daily morning routine ● Active..."
-        
-        // Strategy 1: Find routine-item-touchable element with label containing routine name
         let routineElement = $(`//XCUIElementTypeOther[contains(@name, "routine-item-touchable") and contains(@label, "${routineName}")]`);
         
         try {
             await routineElement.waitForDisplayed({ timeout: 5000 });
-            return; // Found it!
+            return this;
         } catch (error) {
             // Try alternative strategies
         }
         
-        // Strategy 2: Find any element with label starting with routine name
         routineElement = $(`//XCUIElementTypeOther[starts-with(@label, "${routineName}")]`);
         try {
             await routineElement.waitForDisplayed({ timeout: 3000 });
-            return;
+            return this;
         } catch (error) {
             // Try next strategy
         }
         
-        // Strategy 3: Find routine-item container
         routineElement = $(`//XCUIElementTypeOther[contains(@name, "routine-item") and contains(@label, "${routineName}")]`);
         try {
             await routineElement.waitForDisplayed({ timeout: 3000 });
-            return;
+            return this;
         } catch (error) {
             // Last resort
         }
         
-        // Strategy 4: Try StaticText (fallback)
         routineElement = $(`//XCUIElementTypeStaticText[@name="${routineName}"]`);
         await routineElement.waitForDisplayed({ timeout: 10000 });
+        return this;
     }
 
     /**
@@ -155,16 +95,15 @@ class MyRoutinesPage extends Page {
      */
     public async tapRoutineItem(indexOrName: number | string) {
         if (typeof indexOrName === 'number') {
-            // Use index-based approach
-            const routineItem = await this.getRoutineItemTouchable(indexOrName);
+            const routineItem = MyRoutinesObjects.getRoutineItemTouchable(indexOrName);
             await expect(routineItem).toBeDisplayed();
             await routineItem.click();
         } else {
-            // Find by name using XPath
             const routineItem = $(`//XCUIElementTypeOther[contains(@name, "routine-item-touchable") and contains(@label, "${indexOrName}")]`);
             await expect(routineItem).toBeDisplayed();
             await routineItem.click();
         }
+        return this;
     }
 
     /**
@@ -172,20 +111,59 @@ class MyRoutinesPage extends Page {
      * @param index The index of the routine (1-based)
      */
     public async tapEditRoutine(index: number) {
-        const editButton = await this.getEditRoutineButton(index);
+        const editButton = await MyRoutinesObjects.getEditRoutineButton(index);
         await expect(editButton).toBeDisplayed();
         await editButton.click();
+        return this;
     }
 
     /**
      * Tap delete button for a routine
-     * @param index The index of the routine (1-based)
+     * @param routineName The name of the routine
      */
     public async tapDeleteRoutine(routineName: string) {
-        const deleteButton = await this.getDeleteRoutineButton(routineName);
+        const deleteButton = await MyRoutinesObjects.getDeleteRoutineButton(routineName);
         await expect(deleteButton).toBeDisplayed();
         await deleteButton.click();
-        await browser.acceptAlert()
+        await browser.acceptAlert();
+        return this;
+    }
+
+    /**
+     * Tap the report button for a routine by routine ID
+     * @param routineId The routine ID
+     */
+    public async tapReportButton(routineId: number) {
+        const reportButton = RoutineListObjects.getReportButton(routineId);
+        await expect(reportButton).toBeDisplayed({ wait: 5000 });
+        await reportButton.click();
+        await browser.pause(1000);
+        return this;
+    }
+
+    /**
+     * Tap the report button for a routine by name
+     * @param routineName The name of the routine
+     */
+    public async tapReportButtonByName(routineName: string) {
+        // Find the routine item first to get its ID
+        const routineItem = $(`//XCUIElementTypeOther[contains(@name, "routine-item-touchable") and contains(@label, "${routineName}")]`);
+        await expect(routineItem).toBeDisplayed({ wait: 5000 });
+        
+        // Try to extract ID from the name attribute
+        const nameAttr = await routineItem.getAttribute('name');
+        const match = nameAttr?.match(/routine-item-touchable-(\d+)/);
+        if (match) {
+            const routineId = parseInt(match[1], 10);
+            await this.tapReportButton(routineId);
+        } else {
+            // Fallback: try to find report button near the routine item
+            const reportButton = RoutineListObjects.getReportButtonByName(routineName);
+            await expect(reportButton).toBeDisplayed({ wait: 5000 });
+            await reportButton.click();
+            await browser.pause(1000);
+        }
+        return this;
     }
 
     /**
@@ -194,7 +172,6 @@ class MyRoutinesPage extends Page {
      */
     public async deleteRoutineByName(routineName: string) {
         try {
-            // Wait for screen to be ready with retries
             let screenReady = false;
             for (let i = 0; i < 3; i++) {
                 try {
@@ -207,13 +184,11 @@ class MyRoutinesPage extends Page {
             }
             
             if (!screenReady) {
-                // Try to find the routine anyway - might be on the screen even if waitForScreen failed
                 console.log('Screen wait failed, attempting to find routine anyway...');
             }
             
             await browser.pause(500);
             
-            // Get all routine items and find the one matching the name
             const routines = await this.getRoutineList();
             let routineIndex = -1;
             
@@ -222,21 +197,18 @@ class MyRoutinesPage extends Page {
                     const routine = routines[i];
                     const label = await routine.getAttribute('label');
                     if (label && label.includes(routineName)) {
-                        routineIndex = i + 1; // Convert to 1-based index
+                        routineIndex = i + 1;
                         break;
                     }
                 } catch (e) {
-                    // Continue searching
                     continue;
                 }
             }
             
             if (routineIndex === -1) {
-                // Try alternative: find by XPath
                 const routineItem = $(`//XCUIElementTypeOther[contains(@name, "routine-item-touchable") and contains(@label, "${routineName}")]`);
                 try {
                     await expect(routineItem).toBeDisplayed({ timeout: 2000 });
-                    // If found, try to get index from the name attribute
                     const nameAttr = await routineItem.getAttribute('name');
                     const match = nameAttr?.match(/routine-item-touchable-(\d+)/);
                     if (match) {
@@ -244,22 +216,19 @@ class MyRoutinesPage extends Page {
                     }
                 } catch (e) {
                     console.log(`Routine "${routineName}" not found - may already be deleted`);
-                    return; // Routine doesn't exist, which is fine for cleanup
+                    return this;
                 }
             }
             
             if (routineIndex === -1) {
                 console.log(`Could not determine index for routine "${routineName}"`);
-                return;
+                return this;
             }
             
-            // Use the existing delete method with the found index
-            await this.tapDeleteRoutine(routineIndex);
+            await this.tapDeleteRoutine(routineIndex.toString());
             
-            // Handle confirmation dialog if it appears
             await browser.pause(500);
             try {
-                // Look for confirmation buttons (Delete, Confirm, OK, etc.)
                 const confirmSelectors = [
                     $('~Delete'),
                     $('~Confirm'),
@@ -281,19 +250,17 @@ class MyRoutinesPage extends Page {
                     }
                 }
             } catch (e) {
-                // No confirmation dialog, continue
+                // No confirmation dialog
             }
             
-            // Wait a moment for deletion to complete
             await browser.pause(500);
             
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             console.log(`Error deleting routine "${routineName}": ${errorMessage}`);
-            // Don't throw - cleanup failures shouldn't fail the test
         }
+        return this;
     }
 }
 
 export default new MyRoutinesPage();
-

@@ -16,7 +16,8 @@
     "@chauhaidang/xq-js-common-kit": "1.0.7"
   },
   "scripts": {
-    "wdio": "wdio run ./wdio.conf.ts",
-    "analyze-dom": "tsx scripts/analyze-dom-trees.ts"
+    "wdio": "wdio run ./config/wdio.conf.ts",
+    "analyze-dom": "tsx scripts/analyze-dom-trees.ts",
+    "install:app": "xcrun simctl install 9D4D7315-746B-47BF-A531-2B2E0E9EDD7D ./XQFitness.app"
   }
 }
