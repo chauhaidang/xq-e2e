@@ -7,3 +7,4 @@ nginx-gateway.conf
 dom-captures/
 xq-compose.yml
 XQFitness.app/
+.DS_Store
