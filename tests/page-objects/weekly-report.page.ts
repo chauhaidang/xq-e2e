@@ -117,8 +117,8 @@ class WeeklyReportPage extends Page {
         const muscleGroupElement = WeeklyReportObjects.getMuscleGroupByName(muscleGroupName);
         await expect(muscleGroupElement).toBeDisplayed({ wait: 5000 });
         
-        // Verify the sets count is displayed
-        const setsText = WeeklyReportObjects.getSetsText(expectedSets);
+        // Verify the sets count is displayed within the specific muscle group card
+        const setsText = WeeklyReportObjects.getSetsTextForMuscleGroup(muscleGroupName, expectedSets);
         await expect(setsText).toBeDisplayed({ wait: 3000 });
         
         return this;

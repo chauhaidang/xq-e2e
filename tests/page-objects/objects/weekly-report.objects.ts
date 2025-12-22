@@ -58,7 +58,16 @@ class WeeklyReportObjects {
     }
 
     /**
-     * Get sets text element by expected sets count
+     * Get sets text element by expected sets count within a specific muscle group
+     * @param muscleGroupName The name of the muscle group (e.g., "Chest")
+     * @param expectedSets The expected number of sets
+     */
+    public getSetsTextForMuscleGroup(muscleGroupName: string, expectedSets: number) {
+        return $(`//XCUIElementTypeOther[contains(@name, "muscle-group-") and contains(@label, "${muscleGroupName}")]//XCUIElementTypeStaticText[@label="${expectedSets}"]`);
+    }
+
+    /**
+     * Get sets text element by expected sets count (legacy method for backward compatibility)
      * @param expectedSets The expected number of sets
      */
     public getSetsText(expectedSets: number) {

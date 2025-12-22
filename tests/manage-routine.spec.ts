@@ -1,6 +1,7 @@
 import RoutineTasks from './tasks/routine.tasks.js';
 import WorkoutDayTasks from './tasks/workout-day.tasks.js';
 import RoutineDetailPage from './page-objects/routine-detail.page.js';
+import MyRoutinesPage from './page-objects/my-routines.page.js';
 import * as kit from '@chauhaidang/xq-js-common-kit';
 import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi} from 'xq-fitness-write-client';
 import { MuscleGroupId } from '../support/utils/muscle-group-id.enum.js';
@@ -28,7 +29,7 @@ describe('Manage Routine', () => {
         await browser.terminateApp(bundleId);
     });
 
-    after(async () => {
+    afterEach(async () => {
         for (const routineId of trackRoutines) {
             await routinesApi.deleteRoutine(routineId);
         }
@@ -76,8 +77,17 @@ describe('Manage Routine', () => {
             });
 
             await browser.activateApp(bundleId);
-            await WorkoutDayTasks.editWorkoutDaySet(routine.data.name, workoutDay.data.dayName, MuscleGroupId.Chest, 6);
-            await WorkoutDayTasks.verifyWorkoutDaySet(routine.data.name, workoutDay.data.dayName, 'Chest', 6);
+            
+            // Navigate to routine detail
+            await MyRoutinesPage.waitForScreen();
+            await MyRoutinesPage.tapRoutineItem(routine.data.name);
+            await RoutineDetailPage.waitForScreen();
+            
+            // Edit existing workout day to increase sets (4 -> 6)
+            await WorkoutDayTasks.editWorkoutDaySet(workoutDay.data.dayName, MuscleGroupId.Chest, 6);
+            
+            // Verify workout day set directly on Routine Details screen (we're already here)
+            await RoutineDetailPage.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6);
         });
     });
 });

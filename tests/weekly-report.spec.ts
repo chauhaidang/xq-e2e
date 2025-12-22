@@ -2,6 +2,7 @@ import WeeklyReportTasks from './tasks/weekly-report.tasks.js';
 import WorkoutDayTasks from './tasks/workout-day.tasks.js';
 import RoutineDetailPage from './page-objects/routine-detail.page.js';
 import MyRoutinesPage from './page-objects/my-routines.page.js';
+import WeeklyReportPage from './page-objects/weekly-report.page.js';
 import * as kit from '@chauhaidang/xq-js-common-kit';
 import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi, SnapshotsApi} from 'xq-fitness-write-client';
 import { MuscleGroupId } from '../support/utils/muscle-group-id.enum.js';
@@ -30,15 +31,20 @@ describe('Weekly Report', () => {
         await browser.terminateApp(bundleId);
     });
 
-    after(async () => {
+    afterEach(async () => {
+        // Clean up routines created in this test
         for (const routineId of trackRoutines) {
-            await routinesApi.deleteRoutine(routineId);
+            try {
+                await routinesApi.deleteRoutine(routineId);
+            } catch (error) {
+                console.error(`Failed to delete routine ${routineId}:`, error);
+            }
         }
     });
 
     context('When creating snapshot from UI', () => {
         it('should capture updated workout day sets when creating snapshot after adding another workout day', async () => {
-            const routineName = 'SNAPSHOT routine' + kit.generateRandomString(5);
+            const routineName = kit.generateRandomString(5);
             const routine = await routinesApi.createRoutine({
                 name: routineName,
                 description: 'test update routine workout days set',
@@ -46,6 +52,8 @@ describe('Weekly Report', () => {
             });
 
             trackRoutines.push(routine.data.id);
+            
+            console.log(`[Test 1] Created routine: ID=${routine.data.id}, Name=${routineName}`);
 
             // Create initial workout day with sets via API
             const workoutDay1 = await workoutDaysApi.createWorkoutDay({
@@ -92,19 +100,24 @@ describe('Weekly Report', () => {
             // View report and verify aggregated totals
             // Chest: 4 (Monday) + 3 (Wednesday) = 7
             // Back: 3 (Monday) + 2 (Wednesday) = 5
-            await WeeklyReportTasks.navigateToReport(routine.data.id);
+            console.log(`[Test 1] Navigating to report for routine: ID=${routine.data.id}, Name=${routineName}`);
+            await WeeklyReportTasks.navigateToReportByName(routineName);
+            await WeeklyReportPage.waitForLoadingToComplete();
             await WeeklyReportTasks.verifyMuscleGroupTotal('Chest', 7);
             await WeeklyReportTasks.verifyMuscleGroupTotal('Back', 5);
         });
 
         it('should capture updated workout day sets when creating snapshot after editing existing workout day', async () => {
+            const routineName = kit.generateRandomString(5);
             const routine = await routinesApi.createRoutine({
-                name: 'Test Routine ' + kit.generateRandomString(5),
+                name: routineName,
                 description: 'Test routine for snapshot after edit',
                 isActive: true,
             });
 
             trackRoutines.push(routine.data.id);
+            
+            console.log(`[Test 2] Created routine: ID=${routine.data.id}, Name=${routineName}`);
 
             // Create initial workout day with sets via API
             const workoutDay = await workoutDaysApi.createWorkoutDay({
@@ -133,6 +146,9 @@ describe('Weekly Report', () => {
                 6
             );
             
+            // Verify the edit was successful before creating snapshot
+            await RoutineDetailPage.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6);
+            
             // Create snapshot from UI (should capture updated sets: 6)
             await RoutineDetailPage.tapCreateSnapshot();
             await RoutineDetailPage.waitForSnapshotCreationComplete();
@@ -142,7 +158,11 @@ describe('Weekly Report', () => {
             await MyRoutinesPage.waitForScreen();
             
             // View report and verify updated total (6 sets, not 4)
-            await WeeklyReportTasks.navigateToReport(routine.data.id);
+            // Use the routine name instead of ID to ensure we're viewing the correct routine's report
+            // This is more reliable when tests run together as it avoids ID confusion
+            console.log(`[Test 2] Navigating to report for routine: ID=${routine.data.id}, Name=${routineName}`);
+            await WeeklyReportTasks.navigateToReportByName(routineName);
+            await WeeklyReportPage.waitForLoadingToComplete();
             await WeeklyReportTasks.verifyMuscleGroupTotal('Chest', 6);
         });
     });

@@ -11,7 +11,7 @@ When an E2E test fails, follow this automated healing process:
 
 2. **Analyze the Failure**
    - Examine the error message to identify which element selector failed
-   - Review the captured DOM tree to find the correct accessibility identifier or selector
+   - Review the captured DOM tree to find the correct accessibility identifier or selector in ./artifacts/
    - Look for elements with `name` or `label` attributes that match the expected functionality
    - Check for common patterns:
      - Accessibility identifiers (e.g., `name="routine-name-input"`)
@@ -19,6 +19,7 @@ When an E2E test fails, follow this automated healing process:
      - Text content that might be used for identification
 
 3. **Fix the Selector**
+   - Refer to ./artifacts/ to find page-source.xml to identify available selectors
    - Update the page object file with the correct selector
    - Prefer accessibility identifiers (`~identifier`) over XPath when possible
    - If an accessibility identifier doesn't exist, use XPath as a fallback
@@ -55,4 +56,14 @@ When an E2E test fails, follow this automated healing process:
 - Document selector changes in code comments when the reason isn't obvious
 - Keep selectors as specific as possible to avoid false matches
 - Use meaningful accessibility identifiers in the app code to make tests more maintainable
+
+## Task Review Guidelines
+
+- **Review Task Logic Before Use**: Carefully review task methods to understand what navigation and setup they perform
+- **Avoid Duplication**: If you're already on the correct screen, use page object methods directly instead of task methods that include navigation
+- **Task vs Page Object**: 
+  - Task methods (`*Tasks`) typically include navigation and screen setup
+  - Page object methods (`*Page`) assume you're already on the correct screen
+  - Use page object methods when you're already in the correct context to avoid unnecessary navigation
+- **Example**: If you're already on `RoutineDetailPage`, use `RoutineDetailPage.verifyWorkoutDaySet()` directly instead of `WorkoutDayTasks.verifyWorkoutDaySet()` which navigates to My Routines first
 
