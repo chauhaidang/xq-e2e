@@ -120,7 +120,6 @@ class WeeklyReportTasks {
      * @param expectedSets The expected number of sets
      */
     async verifyMuscleGroupTotal(muscleGroupName: string, expectedSets: number) {
-        await WeeklyReportPage.waitForLoadingToComplete();
         await WeeklyReportPage.verifyMuscleGroupTotal(muscleGroupName, expectedSets);
     }
 }

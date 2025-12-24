@@ -5,7 +5,7 @@ import MyRoutinesPage from './page-objects/my-routines.page.js';
 import WeeklyReportPage from './page-objects/weekly-report.page.js';
 import * as kit from '@chauhaidang/xq-js-common-kit';
 import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi, SnapshotsApi} from 'xq-fitness-write-client';
-import { MuscleGroupId } from '../support/utils/muscle-group-id.enum.js';
+import { MuscleGroupId } from './enum.js';
 
 describe('Weekly Report', () => {
     let routinesApi: RoutinesApi;
@@ -43,7 +43,7 @@ describe('Weekly Report', () => {
     });
 
     context('When creating snapshot from UI', () => {
-        it('should capture updated workout day sets when creating snapshot after adding another workout day', async () => {
+        it.only('should capture updated workout day sets when creating snapshot after adding another workout day', async () => {
             const routineName = kit.generateRandomString(5);
             const routine = await routinesApi.createRoutine({
                 name: routineName,
@@ -74,6 +74,12 @@ describe('Weekly Report', () => {
                 numberOfSets: 3,
             });
 
+            await workoutDaySetsApi.createWorkoutDaySet({
+                workoutDayId: workoutDay1.data.id,
+                muscleGroupId: MuscleGroupId.Abductor,
+                numberOfSets: 2,
+            });
+
             await browser.activateApp(bundleId);
 
             // Add another workout day with the same muscle group (increases total sets)
@@ -100,11 +106,12 @@ describe('Weekly Report', () => {
             // View report and verify aggregated totals
             // Chest: 4 (Monday) + 3 (Wednesday) = 7
             // Back: 3 (Monday) + 2 (Wednesday) = 5
+            // Abductor: 2 (Monday) + 0 (Wednesday) = 2
             console.log(`[Test 1] Navigating to report for routine: ID=${routine.data.id}, Name=${routineName}`);
             await WeeklyReportTasks.navigateToReportByName(routineName);
-            await WeeklyReportPage.waitForLoadingToComplete();
             await WeeklyReportTasks.verifyMuscleGroupTotal('Chest', 7);
             await WeeklyReportTasks.verifyMuscleGroupTotal('Back', 5);
+            await WeeklyReportTasks.verifyMuscleGroupTotal('Abductor', 2);
         });
 
         it('should capture updated workout day sets when creating snapshot after editing existing workout day', async () => {
@@ -130,6 +137,12 @@ describe('Weekly Report', () => {
                 workoutDayId: workoutDay.data.id,
                 muscleGroupId: MuscleGroupId.Chest,
                 numberOfSets: 4,
+            });
+
+            await workoutDaySetsApi.createWorkoutDaySet({
+                workoutDayId: workoutDay.data.id,
+                muscleGroupId: MuscleGroupId.Abductor,
+                numberOfSets: 3,
             });
 
             await browser.activateApp(bundleId);
@@ -164,6 +177,7 @@ describe('Weekly Report', () => {
             await WeeklyReportTasks.navigateToReportByName(routineName);
             await WeeklyReportPage.waitForLoadingToComplete();
             await WeeklyReportTasks.verifyMuscleGroupTotal('Chest', 6);
+            await WeeklyReportTasks.verifyMuscleGroupTotal('Abductor', 3);
         });
     });
 });

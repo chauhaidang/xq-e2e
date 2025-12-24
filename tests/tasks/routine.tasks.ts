@@ -20,6 +20,9 @@ class RoutineTasks {
         await MyRoutinesPage.waitForScreen();
         await MyRoutinesPage.tapCreateRoutine();
         
+        // Wait for screen to be displayed
+        await CreateRoutinePage.waitForScreen();
+        
         // Fill in routine details
         await CreateRoutinePage.enterRoutineName(name);
         await CreateRoutinePage.enterRoutineDescription(description);

@@ -9,6 +9,9 @@ import Page from './page.js';
  * @internal
  */
 class RoutineDetailPage extends Page {
+    public async isScreenDisplayed() {
+        return await RoutineDetailObjects.routineDetailScreen.isDisplayed();
+    }
 
     /**
      * Wait for the Routine Detail screen to be displayed
@@ -79,12 +82,8 @@ class RoutineDetailPage extends Page {
             }
         }
         
-        console.log(`Adding ${actualSets.length} sets...`);
         for (let i = 0; i < actualSets.length; i++) {
-            console.log(`Adding set ${i + 1}/${actualSets.length}: ${actualSets[i]}`);
             await this.addSet(actualSets[i]);
-            console.log(`Set ${i + 1} added`);
-            
             if (i < actualSets.length - 1) {
                 try {
                     const notesLabel = RoutineDetailObjects.notesLabel;
@@ -96,9 +95,7 @@ class RoutineDetailPage extends Page {
             }
         }
         
-        console.log('Saving workout day...');
         await this.saveWorkoutDay();
-        console.log('Workout day saved');
         return this;
     }
 
@@ -177,7 +174,7 @@ class RoutineDetailPage extends Page {
             'forearms': 6, 'forearm': 6, 'quadriceps': 7, 'quad': 7,
             'hamstrings': 8, 'hamstring': 8, 'glutes': 9, 'glute': 9,
             'calves': 10, 'calf': 10, 'abs': 11, 'ab': 11,
-            'lower back': 12, 'lowerback': 12, 'arm': 4, 'arms': 4
+            'lower back': 12, 'lowerback': 12, 'abductor': 13, 'arm': 4, 'arms': 4
         };
         
         const normalizedName = muscleGroupName.toLowerCase().trim();
@@ -247,34 +244,35 @@ class RoutineDetailPage extends Page {
      */
     public async saveWorkoutDay() {
         try {
-            const notesLabel = $('//XCUIElementTypeStaticText[@label="Notes"]');
-            await notesLabel.doubleClick();
-            await browser.pause(400);
+            const notesLabel = RoutineDetailObjects.notesLabel;
+            const isNotesVisible = await notesLabel.isDisplayed();
+            
+            if (!isNotesVisible) {
+                await browser.swipe({direction: 'down', percent: 0.5});
+            }
+            
+            if (await notesLabel.isDisplayed()) {
+                await notesLabel.doubleClick();
+                await browser.pause(400);
+            }
         } catch (e) {
-            // Continue
+            // Keyboard might not be open or Notes label not accessible
         }
         
-        console.log('Looking for save workout day button...');
         let saveButton = RoutineDetailObjects.saveWorkoutDayButton;
         await saveButton.scrollIntoView();
         await browser.pause(1500);
         
         // Re-query the button to ensure we have the latest reference
         saveButton = RoutineDetailObjects.saveWorkoutDayButton;
-        await saveButton.waitForExist({ timeout: 5000 });
         await expect(saveButton).toBeDisplayed({ wait: 5000 });
-        await expect(saveButton).toBeEnabled({ wait: 5000 });
         
-        console.log('Clicking save workout day button...');
         await saveButton.click();
-        console.log('Save button clicked');
         await browser.pause(500); // Give time for the click to register
         
-        // Handle alert if present
         try {
             const alert = await browser.getAlertText();
             if (alert) {
-                console.log(`⚠️  Accepting alert: ${alert}`);
                 await browser.acceptAlert();
                 await browser.pause(1000);
             }

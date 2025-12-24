@@ -115,6 +115,7 @@ class WeeklyReportPage extends Page {
      */
     public async verifyMuscleGroupTotal(muscleGroupName: string, expectedSets: number) {
         const muscleGroupElement = WeeklyReportObjects.getMuscleGroupByName(muscleGroupName);
+        await muscleGroupElement.scrollIntoView({ percent: 0.25, maxScrolls: 3 });
         await expect(muscleGroupElement).toBeDisplayed({ wait: 5000 });
         
         // Verify the sets count is displayed within the specific muscle group card
