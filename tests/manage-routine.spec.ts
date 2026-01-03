@@ -1,7 +1,6 @@
-import RoutineTasks from './tasks/routine.tasks.js';
-import WorkoutDayTasks from './tasks/workout-day.tasks.js';
-import RoutineDetailPage from './page-objects/routine-detail.page.js';
-import MyRoutinesPage from './page-objects/my-routines.page.js';
+import RoutineDetailPage, { createFluentRoutineDetailPage } from './page-objects/routine-detail.page.js';
+import { createFluentMyRoutinesPage } from './page-objects/my-routines.page.js';
+import { createFluentCreateRoutinePage } from './page-objects/create-routine.page.js';
 import * as kit from '@chauhaidang/xq-js-common-kit';
 import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi} from 'xq-fitness-write-client';
 import { MuscleGroupId } from './enum.js';
@@ -44,7 +43,8 @@ describe('Manage Routine', () => {
                 // Delete each UI-created routine by name
                 for (const routineName of trackRoutineNames) {
                     try {
-                        await RoutineTasks.deleteRoutine(routineName);
+                        const myRoutines = createFluentMyRoutinesPage();
+                        await myRoutines.waitForScreen().tapDeleteRoutine(routineName).execute();
                     } catch (e) {
                         console.log(`Failed to delete routine by name: ${routineName}`, e);
                     }
@@ -73,18 +73,42 @@ describe('Manage Routine', () => {
             trackRoutineNames.push(routineName);
             
             await browser.activateApp(bundleId);
-            await RoutineTasks.createRoutine(routineName, routineDescription);
-            await RoutineTasks.verifyRoutineExists(routineName);
-            await WorkoutDayTasks.addWorkoutDay(
-                routineName,
-                'Monday upper body',
-                '4 sets of chest',
-                '2 sets of back',
-                '3 sets of abductor',
-            );
-            await RoutineDetailPage.verifyWorkoutDaySet('Monday upper body', 'Chest', 4);
-            await RoutineDetailPage.verifyWorkoutDaySet('Monday upper body', 'Back', 2);
-            await RoutineDetailPage.verifyWorkoutDaySet('Monday upper body', 'Abductor', 3);
+            
+            // Create routine using fluent proxy
+            const myRoutines = createFluentMyRoutinesPage();
+            await myRoutines.waitForScreen().tapCreateRoutine().execute();
+            
+            const createRoutine = createFluentCreateRoutinePage();
+            await createRoutine
+                .waitForScreen()
+                .enterRoutineName(routineName)
+                .enterRoutineDescription(routineDescription)
+                .verifyToggleIsActive()
+                .tapCreate()
+                .closePopup()
+                .execute();
+            
+            // Verify routine exists
+            await myRoutines.waitForScreen().verifyRoutineExists(routineName).execute();
+            
+            // Add workout day using fluent proxy
+            await myRoutines.waitForScreen().tapRoutineItem(routineName).execute();
+            
+            const routineDetail = createFluentRoutineDetailPage();
+            await routineDetail
+                .waitForScreen()
+                .addWorkoutDay(
+                    'Monday upper body',
+                    '4 sets of chest',
+                    '2 sets of back',
+                    '3 sets of abductor',
+                )
+                .execute();
+            
+            // Verify workout day sets
+            await routineDetail.verifyWorkoutDaySet('Monday upper body', 'Chest', 4).execute();
+            await routineDetail.verifyWorkoutDaySet('Monday upper body', 'Back', 2).execute();
+            await routineDetail.verifyWorkoutDaySet('Monday upper body', 'Abductor', 3).execute();
         });
     });
 
@@ -118,17 +142,20 @@ describe('Manage Routine', () => {
 
             await browser.activateApp(bundleId);
             
-            // Navigate to routine detail
-            await MyRoutinesPage.waitForScreen();
-            await MyRoutinesPage.tapRoutineItem(routine.data.name);
-            await RoutineDetailPage.waitForScreen();
+            // Navigate to routine detail using fluent proxy
+            const myRoutines = createFluentMyRoutinesPage();
+            await myRoutines.waitForScreen().tapRoutineItem(routine.data.name).execute();
             
-            // Edit existing workout day to increase sets (4 -> 6)
-            await WorkoutDayTasks.editWorkoutDaySet(workoutDay.data.dayName, MuscleGroupId.Chest, 6);
+            // Edit existing workout day to increase sets (4 -> 6) using fluent proxy
+            const routineDetail = createFluentRoutineDetailPage();
+            await routineDetail
+                .waitForScreen()
+                .editWorkoutDaySet(workoutDay.data.dayName, MuscleGroupId.Chest, 6)
+                .execute();
             
             // Verify workout day set directly on Routine Details screen (we're already here)
-            await RoutineDetailPage.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6);
-            await RoutineDetailPage.verifyWorkoutDaySet(workoutDay.data.dayName, 'Abductor', 3);
+            await routineDetail.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6).execute();
+            await routineDetail.verifyWorkoutDaySet(workoutDay.data.dayName, 'Abductor', 3).execute();
         });
     });
 });

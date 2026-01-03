@@ -1,8 +1,6 @@
-import WeeklyReportTasks from './tasks/weekly-report.tasks.js';
-import WorkoutDayTasks from './tasks/workout-day.tasks.js';
-import RoutineDetailPage from './page-objects/routine-detail.page.js';
-import MyRoutinesPage from './page-objects/my-routines.page.js';
-import WeeklyReportPage from './page-objects/weekly-report.page.js';
+import { createFluentMyRoutinesPage } from './page-objects/my-routines.page.js';
+import { createFluentRoutineDetailPage } from './page-objects/routine-detail.page.js';
+import { createFluentWeeklyReportPage } from './page-objects/weekly-report.page.js';
 import * as kit from '@chauhaidang/xq-js-common-kit';
 import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi, SnapshotsApi} from 'xq-fitness-write-client';
 import { MuscleGroupId } from './enum.js';
@@ -82,36 +80,43 @@ describe('Weekly Report', () => {
 
             await browser.activateApp(bundleId);
 
-            // Add another workout day with the same muscle group (increases total sets)
-            await WorkoutDayTasks.addWorkoutDay(
-                routineName,
-                'Wednesday Upper',
-                2,
-                '3 sets of chest',
-                '2 sets of back',
-            );
+            // Add another workout day with the same muscle group (increases total sets) using fluent proxy
+            const myRoutines = createFluentMyRoutinesPage();
+            await myRoutines.waitForScreen().tapRoutineItem(routineName).execute();
+            
+            const routineDetail = createFluentRoutineDetailPage();
+            await routineDetail
+                .waitForScreen()
+                .addWorkoutDay(
+                    'Wednesday Upper',
+                    2,
+                    '3 sets of chest',
+                    '2 sets of back',
+                )
+                .execute();
             
             // Wait for screen to update
-            await RoutineDetailPage.waitForScreen();
             await browser.pause(1000);
             
-            // Create snapshot from UI (should capture both workout days)
-            await RoutineDetailPage.tapCreateSnapshot();
-            await RoutineDetailPage.waitForSnapshotCreationComplete();
+            // Create snapshot from UI (should capture both workout days) using fluent proxy
+            await routineDetail.tapCreateSnapshot().waitForSnapshotCreationComplete().execute();
             
-            // Navigate back to routines list
-            await RoutineDetailPage.tapBack();
-            await MyRoutinesPage.waitForScreen();
+            // Navigate back to routines list using fluent proxy
+            await routineDetail.tapBack().execute();
+            await myRoutines.waitForScreen().execute();
             
-            // View report and verify aggregated totals
+            // View report and verify aggregated totals using fluent proxy
             // Chest: 4 (Monday) + 3 (Wednesday) = 7
             // Back: 3 (Monday) + 2 (Wednesday) = 5
             // Abductor: 2 (Monday) + 0 (Wednesday) = 2
             console.log(`[Test 1] Navigating to report for routine: ID=${routine.data.id}, Name=${routineName}`);
-            await WeeklyReportTasks.navigateToReportByName(routineName);
-            await WeeklyReportTasks.verifyMuscleGroupTotal('Chest', 7);
-            await WeeklyReportTasks.verifyMuscleGroupTotal('Back', 5);
-            await WeeklyReportTasks.verifyMuscleGroupTotal('Abductor', 2);
+            await myRoutines.waitForScreen().tapReportButtonByName(routineName).execute();
+            
+            const weeklyReport = createFluentWeeklyReportPage();
+            await weeklyReport.waitForScreen().execute();
+            await weeklyReport.verifyMuscleGroupTotal('Chest', 7).execute();
+            await weeklyReport.verifyMuscleGroupTotal('Back', 5).execute();
+            await weeklyReport.verifyMuscleGroupTotal('Abductor', 2).execute();
         });
 
         it('should capture updated workout day sets when creating snapshot after editing existing workout day', async () => {
@@ -147,37 +152,37 @@ describe('Weekly Report', () => {
 
             await browser.activateApp(bundleId);
             
-            // Navigate to routine detail
-            await MyRoutinesPage.waitForScreen();
-            await MyRoutinesPage.tapRoutineItem(routine.data.name);
-            await RoutineDetailPage.waitForScreen();
+            // Navigate to routine detail using fluent proxy
+            const myRoutines = createFluentMyRoutinesPage();
+            await myRoutines.waitForScreen().tapRoutineItem(routine.data.name).execute();
             
-            // Edit existing workout day to increase sets (4 -> 6)
-            await WorkoutDayTasks.editWorkoutDaySet(
-                workoutDay.data.dayName,
-                MuscleGroupId.Chest,
-                6
-            );
+            // Edit existing workout day to increase sets (4 -> 6) using fluent proxy
+            const routineDetail = createFluentRoutineDetailPage();
+            await routineDetail
+                .waitForScreen()
+                .editWorkoutDaySet(workoutDay.data.dayName, MuscleGroupId.Chest, 6)
+                .execute();
             
             // Verify the edit was successful before creating snapshot
-            await RoutineDetailPage.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6);
+            await routineDetail.verifyWorkoutDaySet(workoutDay.data.dayName, 'Chest', 6).execute();
             
-            // Create snapshot from UI (should capture updated sets: 6)
-            await RoutineDetailPage.tapCreateSnapshot();
-            await RoutineDetailPage.waitForSnapshotCreationComplete();
+            // Create snapshot from UI (should capture updated sets: 6) using fluent proxy
+            await routineDetail.tapCreateSnapshot().waitForSnapshotCreationComplete().execute();
             
-            // Navigate back to routines list
-            await RoutineDetailPage.tapBack();
-            await MyRoutinesPage.waitForScreen();
+            // Navigate back to routines list using fluent proxy
+            await routineDetail.tapBack().execute();
+            await myRoutines.waitForScreen().execute();
             
-            // View report and verify updated total (6 sets, not 4)
+            // View report and verify updated total (6 sets, not 4) using fluent proxy
             // Use the routine name instead of ID to ensure we're viewing the correct routine's report
             // This is more reliable when tests run together as it avoids ID confusion
             console.log(`[Test 2] Navigating to report for routine: ID=${routine.data.id}, Name=${routineName}`);
-            await WeeklyReportTasks.navigateToReportByName(routineName);
-            await WeeklyReportPage.waitForLoadingToComplete();
-            await WeeklyReportTasks.verifyMuscleGroupTotal('Chest', 6);
-            await WeeklyReportTasks.verifyMuscleGroupTotal('Abductor', 3);
+            await myRoutines.waitForScreen().tapReportButtonByName(routineName).execute();
+            
+            const weeklyReport = createFluentWeeklyReportPage();
+            await weeklyReport.waitForLoadingToComplete().execute();
+            await weeklyReport.verifyMuscleGroupTotal('Chest', 6).execute();
+            await weeklyReport.verifyMuscleGroupTotal('Abductor', 3).execute();
         });
     });
 });

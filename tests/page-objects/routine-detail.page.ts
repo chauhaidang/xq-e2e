@@ -2,6 +2,7 @@ import { $, expect, browser } from '@wdio/globals';
 import RoutineDetailObjects from './objects/routine-detail.objects.js';
 import { MuscleGroupId } from '../../support/utils/muscle-group-id.enum.js';
 import Page from './page.js';
+import { createFluentProxy } from '../../support/utils/fluent-proxy.js';
 
 /**
  * Page object for the "Routine Detail" screen
@@ -351,3 +352,18 @@ class RoutineDetailPage extends Page {
 }
 
 export default new RoutineDetailPage();
+
+/**
+ * Creates a fluent proxy instance of RoutineDetailPage that allows method chaining
+ * with deferred execution. Methods are queued and executed when execute() is called.
+ * 
+ * @example
+ * ```typescript
+ * const fluentPage = createFluentRoutineDetailPage();
+ * await fluentPage
+ *     .waitForScreen()
+ *     .addWorkoutDay('Monday', 1, '4 sets of chest')
+ *     .execute();
+ * ```
+ */
+export const createFluentRoutineDetailPage = () => createFluentProxy(new RoutineDetailPage());

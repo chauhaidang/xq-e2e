@@ -1,6 +1,7 @@
 import { $, expect, browser } from '@wdio/globals';
 import ManageWorkoutDayObjects from './objects/manage-workout-day.objects.js';
 import Page from './page.js';
+import { createFluentProxy } from '../../support/utils/fluent-proxy.js';
 
 /**
  * Page object for the "Manage Workout Day" screen
@@ -272,4 +273,22 @@ class ManageWorkoutDayPage extends Page {
 }
 
 export default new ManageWorkoutDayPage();
+
+/**
+ * Creates a fluent proxy instance of ManageWorkoutDayPage that allows method chaining
+ * with deferred execution. Methods are queued and executed when execute() is called.
+ * 
+ * @example
+ * ```typescript
+ * const fluentPage = createFluentManageWorkoutDayPage();
+ * await fluentPage
+ *     .waitForScreen()
+ *     .enterDayNumber(1)
+ *     .enterDayName('Monday')
+ *     .addSet('4 sets of chest')
+ *     .saveWorkoutDay()
+ *     .execute();
+ * ```
+ */
+export const createFluentManageWorkoutDayPage = () => createFluentProxy(new ManageWorkoutDayPage());
 

@@ -1,6 +1,7 @@
 import { expect, browser } from '@wdio/globals';
 import CreateRoutineObjects from './objects/create-routine.objects.js';
 import Page from './page.js';
+import { createFluentProxy } from '../../support/utils/fluent-proxy.js';
 
 /**
  * Page object for the "Create Routine" form screen
@@ -127,3 +128,20 @@ class CreateRoutinePage extends Page {
 }
 
 export default new CreateRoutinePage();
+
+/**
+ * Creates a fluent proxy instance of CreateRoutinePage that allows method chaining
+ * with deferred execution. Methods are queued and executed when execute() is called.
+ * 
+ * @example
+ * ```typescript
+ * const fluentPage = createFluentCreateRoutinePage();
+ * await fluentPage
+ *     .waitForScreen()
+ *     .enterRoutineName('My Routine')
+ *     .enterRoutineDescription('Description')
+ *     .tapCreate()
+ *     .execute();
+ * ```
+ */
+export const createFluentCreateRoutinePage = () => createFluentProxy(new CreateRoutinePage());

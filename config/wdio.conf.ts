@@ -69,7 +69,7 @@ export const config: WebdriverIO.Config = {
         platformName: 'iOS',
         'appium:platformVersion': '18.3',
         'appium:automationName': 'XCUITest',
-        'appium:app': './XQFitness.app',
+        'appium:app': 'e2e/XQFitness.app',
         "appium:fullReset": false,
         "appium:noReset": true,
         "appium:udid": "9D4D7315-746B-47BF-A531-2B2E0E9EDD7D",

@@ -1,6 +1,7 @@
 import { expect, browser } from '@wdio/globals';
 import WeeklyReportObjects from './objects/weekly-report.objects.js';
 import Page from './page.js';
+import { createFluentProxy } from '../../support/utils/fluent-proxy.js';
 
 /**
  * Page object for the "Weekly Report" screen
@@ -137,4 +138,20 @@ class WeeklyReportPage extends Page {
 }
 
 export default new WeeklyReportPage();
+
+/**
+ * Creates a fluent proxy instance of WeeklyReportPage that allows method chaining
+ * with deferred execution. Methods are queued and executed when execute() is called.
+ * 
+ * @example
+ * ```typescript
+ * const fluentPage = createFluentWeeklyReportPage();
+ * await fluentPage
+ *     .waitForScreen()
+ *     .waitForLoadingToComplete()
+ *     .verifyMuscleGroupTotal('Chest', 7)
+ *     .execute();
+ * ```
+ */
+export const createFluentWeeklyReportPage = () => createFluentProxy(new WeeklyReportPage());
 
