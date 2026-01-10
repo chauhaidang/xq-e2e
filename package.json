@@ -2,6 +2,7 @@
   "name": "e2e",
   "type": "module",
   "devDependencies": {
+    "@chauhaidang/xq-js-common-kit": "1.0.7",
     "@types/node": "^24.10.1",
     "@wdio/cli": "^9.21.1",
     "@wdio/globals": "^9.17.0",
@@ -12,12 +13,17 @@
     "axios": "^1.13.2",
     "expect-webdriverio": "^5.5.0",
     "xq-fitness-read-client": "file:./generated-clients/read-service",
-    "xq-fitness-write-client": "file:./generated-clients/write-service",
-    "@chauhaidang/xq-js-common-kit": "1.0.7"
+    "xq-fitness-write-client": "file:./generated-clients/write-service"
   },
   "scripts": {
     "wdio": "wdio run ./config/wdio.conf.ts",
+    "test:ui": "wdio run ./config/wdio.conf.ts",
+    "test:api": "wdio run ./config/wdio.api.conf.ts",
+    "test:all": "npm run test:api && npm run test:ui",
     "analyze-dom": "tsx scripts/analyze-dom-trees.ts",
     "install:app": "xcrun simctl install 9D4D7315-746B-47BF-A531-2B2E0E9EDD7D ./XQFitness.app"
+  },
+  "dependencies": {
+    "@wdio/devtools-service": "^10.1.0"
   }
 }

@@ -25,6 +25,7 @@
     },
     "include": [
         "tests",
+        "tests/api",
         "config",
         "page-objects",
         "support",
