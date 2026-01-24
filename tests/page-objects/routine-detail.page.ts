@@ -349,6 +349,51 @@ class RoutineDetailPage extends Page {
         await browser.pause(1000);
         return this;
     }
+
+    /**
+     * Tap the "Add Exercise" button for a specific muscle group in a workout day
+     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     */
+    public async tapAddExerciseForMuscleGroup(dayName: string, muscleGroupName: string) {
+        const addExerciseButton = RoutineDetailObjects.getAddExerciseButtonForMuscleGroup(dayName, muscleGroupName);
+        await addExerciseButton.scrollIntoView();
+        await browser.pause(500);
+        await expect(addExerciseButton).toBeDisplayed({ wait: 5000 });
+        await addExerciseButton.click();
+        await browser.pause(1000);
+        return this;
+    }
+
+    /**
+     * Verify that an exercise is displayed in a specific muscle group for a workout day
+     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     */
+    public async verifyExerciseInMuscleGroup(dayName: string, muscleGroupName: string, exerciseName: string) {
+        const exerciseItem = RoutineDetailObjects.getExerciseItem(dayName, muscleGroupName, exerciseName);
+        await exerciseItem.scrollIntoView();
+        await browser.pause(500);
+        await expect(exerciseItem).toBeDisplayed({ wait: 5000 });
+        return this;
+    }
+
+    /**
+     * Tap on an exercise item to open the manage exercise screen
+     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     */
+    public async tapExerciseItem(dayName: string, muscleGroupName: string, exerciseName: string) {
+        const exerciseItem = RoutineDetailObjects.getExerciseItem(dayName, muscleGroupName, exerciseName);
+        await exerciseItem.scrollIntoView();
+        await browser.pause(500);
+        await expect(exerciseItem).toBeDisplayed({ wait: 5000 });
+        await exerciseItem.click();
+        await browser.pause(1000);
+        return this;
+    }
 }
 
 export default new RoutineDetailPage();

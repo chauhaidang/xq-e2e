@@ -80,6 +80,55 @@ class WeeklyReportObjects {
     public get backButton() {
         return $('//XCUIElementTypeButton[contains(@name, "back")]');
     }
+
+    /**
+     * Get exercise totals section container
+     */
+    public get exerciseTotalsSection() {
+        return $('~exercise-totals-section');
+    }
+
+    /**
+     * Get exercise total item by exercise name
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     */
+    public getExerciseTotalByName(exerciseName: string) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-") and contains(@label, "${exerciseName}")]`);
+    }
+
+    /**
+     * Get exercise total item by index
+     * @param index The index of the exercise total in the list (0-based)
+     */
+    public getExerciseTotalByIndex(index: number) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-")][${index + 1}]`);
+    }
+
+    /**
+     * Get exercise name text within an exercise total item
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     */
+    public getExerciseNameText(exerciseName: string) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-") and contains(@label, "${exerciseName}")]//XCUIElementTypeStaticText[contains(@label, "${exerciseName}")]`);
+    }
+
+    /**
+     * Get total reps text for an exercise
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     * @param totalReps The expected total reps value
+     */
+    public getTotalRepsText(exerciseName: string, totalReps: number) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-") and contains(@label, "${exerciseName}")]//XCUIElementTypeStaticText[contains(@label, "${totalReps}")]`);
+    }
+
+    /**
+     * Get total weight text for an exercise
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     * @param totalWeight The expected total weight value
+     */
+    public getTotalWeightText(exerciseName: string, totalWeight: number) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-") and contains(@label, "${exerciseName}")]//XCUIElementTypeStaticText[contains(@label, "${totalWeight}")]`);
+    }
 }
 
 export default new WeeklyReportObjects();

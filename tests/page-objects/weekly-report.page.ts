@@ -135,6 +135,87 @@ class WeeklyReportPage extends Page {
         await browser.pause(1000);
         return this;
     }
+
+    /**
+     * Verify that an exercise total is displayed with specific values
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     * @param totalReps The expected total reps
+     * @param totalWeight The expected total weight
+     */
+    public async verifyExerciseTotalDisplayed(exerciseName: string, totalReps: number, totalWeight: number) {
+        const exerciseTotal = WeeklyReportObjects.getExerciseTotalByName(exerciseName);
+        await exerciseTotal.scrollIntoView();
+        await browser.pause(500);
+        await expect(exerciseTotal).toBeDisplayed({ wait: 5000 });
+        
+        // Verify exercise name is displayed
+        const exerciseNameText = WeeklyReportObjects.getExerciseNameText(exerciseName);
+        await expect(exerciseNameText).toBeDisplayed({ wait: 3000 });
+        
+        // Verify total reps is displayed
+        const totalRepsText = WeeklyReportObjects.getTotalRepsText(exerciseName, totalReps);
+        await expect(totalRepsText).toBeDisplayed({ wait: 3000 });
+        
+        // Verify total weight is displayed
+        const totalWeightText = WeeklyReportObjects.getTotalWeightText(exerciseName, totalWeight);
+        await expect(totalWeightText).toBeDisplayed({ wait: 3000 });
+        
+        return this;
+    }
+
+    /**
+     * Verify the count of exercise totals displayed
+     * @param expectedCount The expected number of exercise totals
+     */
+    public async verifyExerciseTotalsCount(expectedCount: number) {
+        // Wait for exercise totals section to be displayed
+        try {
+            await expect(WeeklyReportObjects.exerciseTotalsSection).toBeDisplayed({ wait: 5000 });
+        } catch (error) {
+            // Section might not have a specific container, continue
+        }
+        
+        // Count exercise total items
+        let actualCount = 0;
+        for (let i = 0; i < 100; i++) { // Max 100 exercises
+            try {
+                const exerciseTotal = WeeklyReportObjects.getExerciseTotalByIndex(i);
+                if (await exerciseTotal.isDisplayed({ timeout: 1000 })) {
+                    actualCount++;
+                } else {
+                    break;
+                }
+            } catch (error) {
+                break;
+            }
+        }
+        
+        if (actualCount !== expectedCount) {
+            throw new Error(`Expected ${expectedCount} exercise totals, but found ${actualCount}`);
+        }
+        
+        return this;
+    }
+
+    /**
+     * Get exercise total by index and return its details
+     * @param index The index of the exercise total (0-based)
+     * @returns Object with exercise name, total reps, and total weight (if available)
+     */
+    public async getExerciseTotalByIndex(index: number) {
+        const exerciseTotal = WeeklyReportObjects.getExerciseTotalByIndex(index);
+        await exerciseTotal.scrollIntoView();
+        await browser.pause(500);
+        await expect(exerciseTotal).toBeDisplayed({ wait: 5000 });
+        
+        // Get the label/text content of the exercise total element
+        const label = await exerciseTotal.getAttribute('label');
+        
+        return {
+            element: exerciseTotal,
+            label: label || '',
+        };
+    }
 }
 
 export default new WeeklyReportPage();

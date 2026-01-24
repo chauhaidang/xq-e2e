@@ -108,6 +108,35 @@ class RoutineDetailObjects {
     public get createSnapshotButton() {
         return $('~create-snapshot-button');
     }
+
+    /**
+     * Get the "Add Exercise" button for a specific muscle group in a workout day
+     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     */
+    public getAddExerciseButtonForMuscleGroup(dayName: string, muscleGroupName: string) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[contains(@name, "${muscleGroupName}")]//XCUIElementTypeButton[@name="add-exercise-button" or @label="Add Exercise"]`);
+    }
+
+    /**
+     * Get exercise list item by exercise name within a specific muscle group and day
+     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     */
+    public getExerciseItem(dayName: string, muscleGroupName: string, exerciseName: string) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[contains(@name, "${muscleGroupName}")]//XCUIElementTypeOther[contains(@name, "exercise-") and contains(@label, "${exerciseName}")]`);
+    }
+
+    /**
+     * Get exercise list item by index within a specific muscle group and day
+     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * @param index The index of the exercise (0-based)
+     */
+    public getExerciseItemByIndex(dayName: string, muscleGroupName: string, index: number) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[contains(@name, "${muscleGroupName}")]//XCUIElementTypeOther[starts-with(@name, "exercise-")][${index + 1}]`);
+    }
 }
 
 export default new RoutineDetailObjects();
