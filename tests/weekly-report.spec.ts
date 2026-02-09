@@ -41,7 +41,7 @@ describe('Weekly Report', () => {
     });
 
     context('When creating snapshot from UI', () => {
-        it.only('should capture updated workout day sets when creating snapshot after adding another workout day', async () => {
+        it('should capture updated workout day sets when creating snapshot after adding another workout day', async () => {
             const routineName = kit.generateRandomString(5);
             const routine = await routinesApi.createRoutine({
                 name: routineName,
