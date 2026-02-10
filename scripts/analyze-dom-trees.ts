@@ -91,35 +91,6 @@ function analyzeDOMFile(filePath: string): ScreenElements {
 }
 
 /**
- * Generate page object selectors from elements
- */
-function generateSelectors(elements: ElementInfo[]): Map<string, string[]> {
-    const selectors = new Map<string, string[]>();
-    
-    for (const element of elements) {
-        // Prefer accessibility identifiers (name attribute)
-        if (element.name) {
-            const key = element.name;
-            if (!selectors.has(key)) {
-                selectors.set(key, []);
-            }
-            selectors.get(key)!.push(`~${element.name}`);
-        }
-        
-        // Also consider label for buttons/text
-        if (element.label && element.type.includes('Button')) {
-            const key = element.label.toLowerCase().replace(/\s+/g, '-');
-            if (!selectors.has(key)) {
-                selectors.set(key, []);
-            }
-            selectors.get(key)!.push(`~${element.label}`);
-        }
-    }
-    
-    return selectors;
-}
-
-/**
  * Main analysis function
  */
 async function analyzeAllDOMTrees() {
@@ -229,7 +200,7 @@ async function analyzeAllDOMTrees() {
         
         if (allElements.size > 0) {
             console.log('\n   Suggested selectors:');
-            for (const [name, element] of allElements) {
+            for (const [name] of allElements) {
                 const selectorName = name.replace(/-/g, '').replace(/([A-Z])/g, '$1').toLowerCase();
                 console.log(`   public get ${selectorName}() {`);
                 console.log(`       return $('~${name}');`);

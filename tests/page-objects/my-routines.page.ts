@@ -136,6 +136,28 @@ class MyRoutinesPage extends Page {
      */
     public async tapReportButton(routineId: number) {
         const reportButton = RoutineListObjects.getReportButton(routineId);
+        
+        // Wait for element to exist first
+        await reportButton.waitForExist({ timeout: 5000 });
+        
+        // Explicitly scroll to element before clicking to avoid scroll direction issues
+        try {
+            await reportButton.scrollIntoView();
+            await browser.pause(500);
+        } catch (scrollError) {
+            console.log(`Initial scroll failed for report button ${routineId}, trying alternative scroll...`);
+            // Try scrolling down if initial scroll fails (element might be below viewport)
+            try {
+                await browser.execute('mobile: scroll', { 
+                    direction: 'down',
+                    element: reportButton.elementId 
+                });
+                await browser.pause(500);
+            } catch (e2) {
+                console.log(`Alternative scroll also failed, continuing...`);
+            }
+        }
+        
         await expect(reportButton).toBeDisplayed({ wait: 5000 });
         await reportButton.click();
         await browser.pause(1000);
@@ -160,6 +182,28 @@ class MyRoutinesPage extends Page {
         } else {
             // Fallback: try to find report button near the routine item
             const reportButton = RoutineListObjects.getReportButtonByName(routineName);
+            
+            // Wait for element to exist first
+            await reportButton.waitForExist({ timeout: 5000 });
+            
+            // Explicitly scroll to element before clicking
+            try {
+                await reportButton.scrollIntoView();
+                await browser.pause(500);
+            } catch (scrollError) {
+                console.log(`Initial scroll failed for report button by name "${routineName}", trying alternative scroll...`);
+                // Try scrolling down if initial scroll fails
+                try {
+                    await browser.execute('mobile: scroll', { 
+                        direction: 'down',
+                        element: reportButton.elementId 
+                    });
+                    await browser.pause(500);
+                } catch (e2) {
+                    console.log(`Alternative scroll also failed, continuing...`);
+                }
+            }
+            
             await expect(reportButton).toBeDisplayed({ wait: 5000 });
             await reportButton.click();
             await browser.pause(1000);
@@ -192,8 +236,9 @@ class MyRoutinesPage extends Page {
             
             const routines = await this.getRoutineList();
             let routineIndex = -1;
-            
-            for (let i = 0; i < routines.length; i++) {
+            const routinesLength = await routines.length;
+
+            for (let i = 0; i < routinesLength; i++) {
                 try {
                     const routine = routines[i];
                     const label = await routine.getAttribute('label');
@@ -209,7 +254,7 @@ class MyRoutinesPage extends Page {
             if (routineIndex === -1) {
                 const routineItem = $(`//XCUIElementTypeOther[contains(@name, "routine-item-touchable") and contains(@label, "${routineName}")]`);
                 try {
-                    await expect(routineItem).toBeDisplayed({ timeout: 2000 });
+                    await expect(routineItem).toBeDisplayed({ wait: 2000 });
                     const nameAttr = await routineItem.getAttribute('name');
                     const match = nameAttr?.match(/routine-item-touchable-(\d+)/);
                     if (match) {
@@ -241,7 +286,7 @@ class MyRoutinesPage extends Page {
                 
                 for (const confirmButton of confirmSelectors) {
                     try {
-                        if (await confirmButton.isDisplayed({ timeout: 1000 })) {
+                        if (await confirmButton.isDisplayed()) {
                             await confirmButton.click();
                             await browser.pause(500);
                             break;

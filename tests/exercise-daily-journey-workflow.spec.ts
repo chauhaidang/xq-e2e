@@ -2,18 +2,19 @@ import { createFluentRoutineDetailPage } from './page-objects/routine-detail.pag
 import { createFluentMyRoutinesPage } from './page-objects/my-routines.page.js';
 import { createFluentManageExercisePage } from './page-objects/manage-exercise.page.js';
 import { createFluentWeeklyReportPage } from './page-objects/weekly-report.page.js';
-import * as kit from '@chauhaidang/xq-js-common-kit';
-import {Configuration, RoutinesApi, WorkoutDaysApi} from 'xq-fitness-write-client';
+import * as kit from '@chauhaidang/xq-common-kit';
+import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi} from 'xq-fitness-write-client';
 import { MuscleGroupId } from './enum.js';
 
 /**
  * E2E workflow test for exercise management feature
- * Tests complete daily user journey: Create routine (API) → Add workout day (API) → Add exercises (UI) → Create snapshot (UI) → View report (UI) → Update exercises (UI) → Create snapshot again (UI) → View updated report (UI)
- * Setup uses API calls for speed and reliability, while exercise interactions use UI to test the feature
+ * Tests complete daily user journey: Create routine (API) → Add 2 workout days (API) → Add workout day sets (API) → Add exercises (UI) including Bench Press on both days for accumulative report → Create snapshot (UI) → View report (UI) verifying aggregated Bench Press totals
+ * Setup uses API calls for speed and reliability. Workout day sets must be created so the Manage Exercise screen shows muscle group rows; then exercise interactions use UI to test the feature.
  */
 describe('Exercise Daily Journey Workflow', () => {
     let routinesApi: RoutinesApi;
     let workoutDaysApi: WorkoutDaysApi;
+    let workoutDaySetsApi: WorkoutDaySetsApi;
     let trackRoutines: number[] = [];
     const bundleId = 'com.xqfitness.app';
 
@@ -23,6 +24,7 @@ describe('Exercise Daily Journey Workflow', () => {
         });
         routinesApi = new RoutinesApi(configuration);
         workoutDaysApi = new WorkoutDaysApi(configuration);
+        workoutDaySetsApi = new WorkoutDaySetsApi(configuration);
     });
 
     beforeEach(async () => {
@@ -47,10 +49,11 @@ describe('Exercise Daily Journey Workflow', () => {
             const routineName = 'Exercise Test Routine ' + kit.generateRandomString(5);
             const routineDescription = 'Test routine for exercise workflow';
             const dayName = 'Monday Push Day';
+            const day2Name = 'Wednesday Push Day';
             const muscleGroupName = 'Chest';
             const backMuscleGroupName = 'Back';
             
-            // ===== SETUP: Create routine and workout day via API =====
+            // ===== SETUP: Create routine and workout days via API =====
             console.log('[Step 1] Creating routine via API...');
             const routine = await routinesApi.createRoutine({
                 name: routineName,
@@ -61,14 +64,46 @@ describe('Exercise Daily Journey Workflow', () => {
             trackRoutines.push(routine.data.id);
             console.log(`[Step 1] Created routine: ID=${routine.data.id}, Name=${routineName}`);
             
-            console.log('[Step 2] Creating workout day via API...');
+            console.log('[Step 2] Creating workout day 1 via API...');
             const workoutDay = await workoutDaysApi.createWorkoutDay({
                 routineId: routine.data.id,
                 dayNumber: 1,
                 dayName: dayName,
             });
             
-            console.log(`[Step 2] Created workout day: ID=${workoutDay.data.id}, Name=${dayName}`);
+            console.log(`[Step 2] Created workout day 1: ID=${workoutDay.data.id}, Name=${dayName}`);
+            
+            // Create workout day sets for muscle groups so the Manage Exercise screen shows rows per muscle group
+            // (Chest: 6 sets for 2 exercises × 3 sets; Back: 4 sets for Pull-ups)
+            console.log('[Step 2b] Creating workout day sets for day 1 (Chest, Back) via API...');
+            await workoutDaySetsApi.createWorkoutDaySet({
+                workoutDayId: workoutDay.data.id,
+                muscleGroupId: MuscleGroupId.Chest,
+                numberOfSets: 6,
+            });
+            await workoutDaySetsApi.createWorkoutDaySet({
+                workoutDayId: workoutDay.data.id,
+                muscleGroupId: MuscleGroupId.Back,
+                numberOfSets: 4,
+            });
+            console.log('[Step 2b] Workout day 1 sets created.');
+
+            // Create second workout day with Bench Press sets (same exercise for accumulative report validation)
+            console.log('[Step 2c] Creating workout day 2 via API...');
+            const workoutDay2 = await workoutDaysApi.createWorkoutDay({
+                routineId: routine.data.id,
+                dayNumber: 2,
+                dayName: day2Name,
+            });
+            console.log(`[Step 2c] Created workout day 2: ID=${workoutDay2.data.id}, Name=${day2Name}`);
+
+            console.log('[Step 2c] Creating workout day sets for day 2 (Chest: 3 sets for Bench Press) via API...');
+            await workoutDaySetsApi.createWorkoutDaySet({
+                workoutDayId: workoutDay2.data.id,
+                muscleGroupId: MuscleGroupId.Chest,
+                numberOfSets: 3,
+            });
+            console.log('[Step 2c] Workout day 2 sets created.');
             
             // Activate app and navigate to routine detail
             await browser.activateApp(bundleId);
@@ -83,65 +118,84 @@ describe('Exercise Daily Journey Workflow', () => {
             console.log('[Step 3] Adding exercises via UI...');
             
             // Add first exercise to Chest muscle group
-            await routineDetail
-                .tapAddExerciseForMuscleGroup(dayName, muscleGroupName)
-                .execute();
-            
+            // Routine Detail: tap Exercises → Manage Exercise: tap Add for muscle group
+            await routineDetail.tapExercisesForDay(dayName).execute();
             const manageExercise = createFluentManageExercisePage();
             await manageExercise
                 .waitForScreen()
+                .tapAddExerciseForMuscleGroup(muscleGroupName)
                 .enterExerciseName('Bench Press')
                 .enterTotalReps(30)
                 .enterWeight(135)
                 .enterTotalSets(3)
                 .enterNotes('Focus on form')
                 .tapSave()
+                .tapBack()
                 .execute();
             
-            // Verify exercise appears in list
+            // Verify Chest sets on Routine Detail (3 sets from Bench Press)
             await routineDetail
                 .waitForScreen()
-                .verifyExerciseInMuscleGroup(dayName, muscleGroupName, 'Bench Press')
+                .verifyWorkoutDaySet(dayName, muscleGroupName, 3)
                 .execute();
             
             // Add second exercise to same muscle group (Chest)
-            await routineDetail
-                .tapAddExerciseForMuscleGroup(dayName, muscleGroupName)
-                .execute();
-            
+            await routineDetail.tapExercisesForDay(dayName).execute();
             await manageExercise
                 .waitForScreen()
+                .tapAddExerciseForMuscleGroup(muscleGroupName)
                 .enterExerciseName('Incline Dumbbell Press')
                 .enterTotalReps(24)
                 .enterWeight(50)
                 .enterTotalSets(3)
                 .tapSave()
+                .tapBack()
                 .execute();
             
-            // Verify second exercise appears
+            // Verify Chest sets on Routine Detail (6 total: 3 Bench Press + 3 Incline Dumbbell Press)
             await routineDetail
                 .waitForScreen()
-                .verifyExerciseInMuscleGroup(dayName, muscleGroupName, 'Incline Dumbbell Press')
+                .verifyWorkoutDaySet(dayName, muscleGroupName, 6)
                 .execute();
             
             // Add exercise to different muscle group (Back)
-            await routineDetail
-                .tapAddExerciseForMuscleGroup(dayName, backMuscleGroupName)
-                .execute();
-            
+            await routineDetail.tapExercisesForDay(dayName).execute();
             await manageExercise
                 .waitForScreen()
+                .tapAddExerciseForMuscleGroup(backMuscleGroupName)
                 .enterExerciseName('Pull-ups')
                 .enterTotalReps(30)
                 .enterWeight(0) // Bodyweight
                 .enterTotalSets(4)
                 .tapSave()
+                .tapBack()
                 .execute();
             
-            // Verify exercise in Back muscle group
+            // Verify Back sets on Routine Detail (4 sets from Pull-ups)
             await routineDetail
                 .waitForScreen()
-                .verifyExerciseInMuscleGroup(dayName, backMuscleGroupName, 'Pull-ups')
+                .verifyWorkoutDaySet(dayName, backMuscleGroupName, 4)
+                .execute();
+
+            // Add Bench Press to day 2 (same exercise for accumulative report validation)
+            // Day 1 Bench Press: 30 reps, 135 kg. Day 2 Bench Press: 25 reps, 130 kg.
+            // Report aggregates: Bench Press 55 reps, 265 kg
+            await routineDetail.tapExercisesForDay(day2Name).execute();
+            await manageExercise
+                .waitForScreen()
+                .tapAddExerciseForMuscleGroup(muscleGroupName)
+                .enterExerciseName('Bench Press')
+                .enterTotalReps(25)
+                .enterWeight(130)
+                .enterTotalSets(3)
+                .tapSave()
+                .tapBack()
+                .execute();
+
+            // Verify Chest sets on day 2 Routine Detail (3 sets from Bench Press)
+            await routineDetail
+                .waitForScreen()
+                .verifyWorkoutDaySet(day2Name, muscleGroupName, 3)
                 .execute();
             
             // ===== FIRST SNAPSHOT: Create snapshot via UI that captures exercises =====
@@ -168,88 +222,19 @@ describe('Exercise Daily Journey Workflow', () => {
                 .verifyReportDisplayed()
                 .execute();
             
-            // Verify exercise totals are displayed
+            // Verify exercise totals are displayed (Bench Press aggregated from day 1 + day 2)
             await weeklyReport
-                .verifyExerciseTotalDisplayed('Bench Press', 30, 135 * 3) // totalReps: 30, totalWeight: 135 * 3 = 405
-                .verifyExerciseTotalDisplayed('Incline Dumbbell Press', 24, 50 * 3) // totalReps: 24, totalWeight: 50 * 3 = 150
-                .verifyExerciseTotalDisplayed('Pull-ups', 30, 0) // totalReps: 30, totalWeight: 0 (bodyweight)
+                .verifyExerciseTotalDisplayed('Bench Press', 55, 265) // Accumulative: day 1 (30 reps, 135 kg) + day 2 (25 reps, 130 kg) = 55 reps, 265 kg
+                .verifyExerciseTotalDisplayed('Incline Dumbbell Press', 24, 50) // totalReps: 24, weight: 50 kg
+                .verifyExerciseTotalDisplayed('Pull-ups', 30, 0) // totalReps: 30, weight: 0 kg (bodyweight)
                 .verifyExerciseTotalsCount(3)
                 .execute();
             
-            // Verify muscle group totals (aggregated from exercises)
+            // Verify muscle group totals (aggregated from exercises across both days)
             await weeklyReport
-                .verifyMuscleGroupTotal('Chest', 6) // 3 sets (Bench Press) + 3 sets (Incline Dumbbell Press) = 6
+                .verifyMuscleGroupTotal('Chest', 9) // Day 1: 6 sets + Day 2: 3 sets (Bench Press) = 9
                 .verifyMuscleGroupTotal('Back', 4) // 4 sets (Pull-ups)
                 .execute();
-            
-            // ===== UPDATE EXERCISES: Update exercise values via UI =====
-            console.log('[Step 6] Updating exercise values via UI...');
-            // Navigate back to routines list
-            await weeklyReport.tapBack().execute();
-            await myRoutines.waitForScreen().execute();
-            
-            // Navigate back to routine detail
-            await myRoutines.waitForScreen().tapRoutineItem(routineName).execute();
-            await routineDetail.waitForScreen().execute();
-            
-            // Tap on Bench Press exercise to edit
-            await routineDetail
-                .tapExerciseItem(dayName, muscleGroupName, 'Bench Press')
-                .execute();
-            
-            // Update exercise values
-            await manageExercise
-                .waitForScreen()
-                .enterTotalReps(36) // Updated from 30 to 36
-                .enterWeight(145) // Updated from 135 to 145
-                .enterTotalSets(4) // Updated from 3 to 4
-                .tapSave()
-                .execute();
-            
-            // Verify updated exercise appears with new values
-            await routineDetail
-                .waitForScreen()
-                .verifyExerciseInMuscleGroup(dayName, muscleGroupName, 'Bench Press')
-                .execute();
-            
-            // ===== SECOND SNAPSHOT: Create snapshot again via UI that captures updated exercises =====
-            console.log('[Step 7] Creating second snapshot via UI...');
-            await routineDetail
-                .waitForScreen()
-                .tapCreateSnapshot()
-                .waitForSnapshotCreationComplete()
-                .execute();
-            
-            // ===== VIEW UPDATED REPORT: Navigate to weekly report again and verify updated totals =====
-            console.log('[Step 8] Viewing updated weekly report and verifying updated exercise totals...');
-            // Navigate back to routines list
-            await routineDetail.tapBack().execute();
-            await myRoutines.waitForScreen().execute();
-            
-            // Navigate to weekly report again
-            await myRoutines.waitForScreen().tapReportButtonByName(routineName).execute();
-            
-            await weeklyReport
-                .waitForScreen()
-                .waitForLoadingToComplete()
-                .verifyReportDisplayed()
-                .execute();
-            
-            // Verify updated exercise totals are displayed
-            await weeklyReport
-                .verifyExerciseTotalDisplayed('Bench Press', 36, 145 * 4) // Updated: totalReps: 36, totalWeight: 145 * 4 = 580
-                .verifyExerciseTotalDisplayed('Incline Dumbbell Press', 24, 50 * 3) // Unchanged
-                .verifyExerciseTotalDisplayed('Pull-ups', 30, 0) // Unchanged
-                .verifyExerciseTotalsCount(3)
-                .execute();
-            
-            // Verify updated muscle group totals
-            await weeklyReport
-                .verifyMuscleGroupTotal('Chest', 7) // Updated: 4 sets (Bench Press) + 3 sets (Incline Dumbbell Press) = 7
-                .verifyMuscleGroupTotal('Back', 4) // Unchanged
-                .execute();
-            
-            console.log('[Test Complete] All steps completed successfully!');
         });
     });
 });

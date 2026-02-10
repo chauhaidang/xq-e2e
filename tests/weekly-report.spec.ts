@@ -1,15 +1,14 @@
 import { createFluentMyRoutinesPage } from './page-objects/my-routines.page.js';
 import { createFluentRoutineDetailPage } from './page-objects/routine-detail.page.js';
 import { createFluentWeeklyReportPage } from './page-objects/weekly-report.page.js';
-import * as kit from '@chauhaidang/xq-js-common-kit';
-import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi, SnapshotsApi} from 'xq-fitness-write-client';
+import * as kit from '@chauhaidang/xq-common-kit';
+import {Configuration, RoutinesApi, WorkoutDaysApi, WorkoutDaySetsApi} from 'xq-fitness-write-client';
 import { MuscleGroupId } from './enum.js';
 
 describe('Weekly Report', () => {
     let routinesApi: RoutinesApi;
     let workoutDaysApi: WorkoutDaysApi;
     let workoutDaySetsApi: WorkoutDaySetsApi;
-    let snapshotsApi: SnapshotsApi;
     let trackRoutines: number[] = [];
     const bundleId = 'com.xqfitness.app';
 
@@ -20,7 +19,6 @@ describe('Weekly Report', () => {
         routinesApi = new RoutinesApi(configuration);
         workoutDaysApi = new WorkoutDaysApi(configuration);
         workoutDaySetsApi = new WorkoutDaySetsApi(configuration);
-        snapshotsApi = new SnapshotsApi(configuration);
     });
 
     beforeEach(async () => {

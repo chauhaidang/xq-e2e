@@ -1,5 +1,5 @@
 import { $ } from '@wdio/globals';
-import { MuscleGroupId } from '../../../support/utils/muscle-group-id.enum.js';
+import { MuscleGroupId } from '../../enum.js';
 
 /**
  * Object definitions for the "Routine Detail" screen
@@ -43,13 +43,15 @@ class RoutineDetailObjects {
     }
 
     /**
-     * Get the muscle group container element for a specific muscle group and day
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
+     * Get the muscle group container element for a specific muscle group and day (Routine Detail screen).
+     * Routine Detail shows muscle group totals as "Muscle Groups:" with rows like "Chest" and "6 sets".
+     * Uses label containment for flexibility with iOS accessibility aggregation.
+     * @param dayName The day name (e.g., "Monday Push Day" or "Day 1: Monday Push Day")
      * @param muscleGroupName The muscle group name (e.g., "Chest")
      * @param numberOfSets The number of sets (e.g., 6)
      */
     public getMuscleGroupContainerForDay(dayName: string, muscleGroupName: string, numberOfSets: number) {
-        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[@name="${muscleGroupName} ${numberOfSets} sets"]`);
+        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//*[contains(@label, "${muscleGroupName}") and contains(@label, "${numberOfSets} sets")]`);
     }
 
     /**
@@ -110,33 +112,14 @@ class RoutineDetailObjects {
     }
 
     /**
-     * Get the "Add Exercise" button for a specific muscle group in a workout day
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
-     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * Get the "Exercises" button for a workout day (navigates to Manage Exercise screen).
+     * Routine Detail has one Exercises button per workout day (testID: exercises-day-{id}).
+     * @param dayName The day name (e.g., "Monday Push Day" matches "Day 1: Monday Push Day")
      */
-    public getAddExerciseButtonForMuscleGroup(dayName: string, muscleGroupName: string) {
-        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[contains(@name, "${muscleGroupName}")]//XCUIElementTypeButton[@name="add-exercise-button" or @label="Add Exercise"]`);
+    public getExercisesButtonForDay(dayName: string) {
+        return $(`//*[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//*[starts-with(@name, "exercises-day-")]`);
     }
 
-    /**
-     * Get exercise list item by exercise name within a specific muscle group and day
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
-     * @param muscleGroupName The muscle group name (e.g., "Chest")
-     * @param exerciseName The exercise name (e.g., "Bench Press")
-     */
-    public getExerciseItem(dayName: string, muscleGroupName: string, exerciseName: string) {
-        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[contains(@name, "${muscleGroupName}")]//XCUIElementTypeOther[contains(@name, "exercise-") and contains(@label, "${exerciseName}")]`);
-    }
-
-    /**
-     * Get exercise list item by index within a specific muscle group and day
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
-     * @param muscleGroupName The muscle group name (e.g., "Chest")
-     * @param index The index of the exercise (0-based)
-     */
-    public getExerciseItemByIndex(dayName: string, muscleGroupName: string, index: number) {
-        return $(`//XCUIElementTypeOther[starts-with(@name, "workout-day-") and contains(@label, "${dayName}")]//XCUIElementTypeOther[contains(@name, "${muscleGroupName}")]//XCUIElementTypeOther[starts-with(@name, "exercise-")][${index + 1}]`);
-    }
 }
 
 export default new RoutineDetailObjects();

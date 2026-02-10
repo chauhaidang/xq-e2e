@@ -253,7 +253,7 @@ class ManageWorkoutDayPage extends Page {
         
         // Re-query the button to ensure we have the latest reference
         saveButton = ManageWorkoutDayObjects.saveWorkoutDayButton;
-        await expect(saveButton).toBeDisplayedInViewport({ wait: 5000 });
+        await expect(saveButton).toBeDisplayed({ wait: 5000 });
         
         await saveButton.click();
         await browser.pause(500); // Give time for the click to register

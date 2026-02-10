@@ -1,5 +1,4 @@
-import * as fs from 'node:fs'
-import * as path from 'node:path'
+import { capturePageSourceAndScreenshot } from '../utils/common.js';
 
 /**
  * Test lifecycle hooks for WebdriverIO
@@ -15,47 +14,16 @@ export const testHooks = {
      * @param {boolean} result.passed    true if test has passed, otherwise false
      * @param {object}  result.retries   information about spec related retries, e.g. `{ attempts: 0, limit: 0 }`
      */
-    afterTest: async function(test: any, context: any, { error, result, duration, passed, retries }: any) {
-        // Healing mechanism: Print DOM tree when test fails to help identify correct locators
+    afterTest: async function (test: any, _context: any, { passed, error }: any) {
         if (!passed && error) {
-            const { browser } = await import('@wdio/globals');
-            try {
-                const pageSource = await browser.getPageSource();
-                console.log('\n========== HEALING MECHANISM: PAGE SOURCE (DOM TREE) ==========');
-                console.log('Test failed. Below is the current page source to help identify correct locators:');
-                console.log('================================================================');
-                
-                // Ensure artifacts directory exists
-                const artifactsDir = path.join(process.cwd(), 'artifacts');
-                const domCapturesDir = path.join(artifactsDir, 'dom-captures');
-                const screenshotsDir = path.join(artifactsDir, 'screenshots');
-                const logsDir = path.join(artifactsDir, 'logs');
-                
-                if (!fs.existsSync(domCapturesDir)) {
-                    fs.mkdirSync(domCapturesDir, { recursive: true });
-                }
-                if (!fs.existsSync(screenshotsDir)) {
-                    fs.mkdirSync(screenshotsDir, { recursive: true });
-                }
-                if (!fs.existsSync(logsDir)) {
-                    fs.mkdirSync(logsDir, { recursive: true });
-                }
-                
-                // Save page source
-                const pageSourcePath = path.join(domCapturesDir, 'page-source.xml');
-                fs.writeFileSync(pageSourcePath, pageSource);
-                
-                // Save screenshot
-                const image = await browser.takeScreenshot();
-                const screenshotPath = path.join(screenshotsDir, 'screenshot.png');
-                fs.writeFileSync(screenshotPath, Buffer.from(image, 'base64'));
-                
-                console.log(`Page source saved to: ${pageSourcePath}`);
-                console.log(`Screenshot saved to: ${screenshotPath}`);
-                console.log('================================================================\n');
-            } catch (err) {
-                console.log('Could not retrieve page source:', err);
-            }
+            const sanitized = (test?.title ?? 'failed').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '');
+            const prefix = sanitized || `failed-${Date.now()}`;
+            console.log('\n========== HEALING MECHANISM: PAGE SOURCE (DOM TREE) ==========');
+            console.log('Test failed. Capturing page source and screenshot to help identify correct locators.');
+            await capturePageSourceAndScreenshot({
+                pageSourceFileName: `page-source-${prefix}.xml`,
+                screenshotFileName: `screenshot-${prefix}.png`,
+            });
         }
     },
 };

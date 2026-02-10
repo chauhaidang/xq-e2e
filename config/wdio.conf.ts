@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import { testHooks } from '../support/hooks/test-hooks.js';
 
 export const config: WebdriverIO.Config = {
@@ -69,7 +70,7 @@ export const config: WebdriverIO.Config = {
         platformName: 'iOS',
         'appium:platformVersion': '18.3',
         'appium:automationName': 'XCUITest',
-        'appium:app': 'e2e/XQFitness.app',
+        'appium:app': path.join(process.cwd(), 'XQFitness.app'),
         "appium:fullReset": false,
         "appium:noReset": true,
         "appium:udid": "9D4D7315-746B-47BF-A531-2B2E0E9EDD7D",
@@ -123,7 +124,19 @@ export const config: WebdriverIO.Config = {
     // Services take over a specific job you don't want to take care of. They enhance
     // your test setup with almost no effort. Unlike plugins, they don't add new
     // commands. Instead, they hook themselves up into the test process.
-    services: [],
+    services: [
+        // 'visual' service disabled when @wdio/visual-service not installed; re-enable when needed
+        // [
+        //     'visual',
+        //     {
+        //         baselineFolder: path.join(process.cwd(), 'tests', 'baseline'),
+        //         screenshotPath: path.join(process.cwd(), '.tmp', 'screenshots'),
+        //         formatImageName: '{tag}-{platformName}-{width}x{height}',
+        //         savePerInstance: true,
+        //         autoSaveBaseline: true,
+        //     },
+        // ],
+    ],
     // Framework you want to run your specs with.
     // The following are supported: Mocha, Jasmine, and Cucumber
     // see also: https://webdriver.io/docs/frameworks
@@ -151,7 +164,7 @@ export const config: WebdriverIO.Config = {
     // See the full list at http://mochajs.org/
     mochaOpts: {
         ui: 'bdd',
-        timeout: 360000 // Increased timeout for complex tests
+        timeout: 10 * 60 * 1000 // 5 minutes timeout for complex tests
     },
 
     //

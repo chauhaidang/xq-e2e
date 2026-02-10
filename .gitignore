@@ -10,3 +10,10 @@ xq-compose.yml
 XQFitness.app/
 .DS_Store
 api/*.yaml
+.artifacts/
+
+# Visual regression (actual/diff output; baselines live in tests/baseline/)
+.tmp/
+**/actual/
+**/diff/
+artifacts/

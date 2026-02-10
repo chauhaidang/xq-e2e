@@ -1,6 +1,6 @@
 import { $, expect, browser } from '@wdio/globals';
 import RoutineDetailObjects from './objects/routine-detail.objects.js';
-import { MuscleGroupId } from '../../support/utils/muscle-group-id.enum.js';
+import { MuscleGroupId } from '../enum.js';
 import Page from './page.js';
 import { createFluentProxy } from '../../support/utils/fluent-proxy.js';
 
@@ -351,49 +351,36 @@ class RoutineDetailPage extends Page {
     }
 
     /**
-     * Tap the "Add Exercise" button for a specific muscle group in a workout day
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
-     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * Tap the "Exercises" button for a workout day (Routine Detail screen).
+     * Routine Detail has one "Exercises" button per workout day — tapping it navigates to Manage Exercise.
+     * @param dayName The day name (e.g., "Monday Push Day" — matches "Day 1: Monday Push Day")
      */
-    public async tapAddExerciseForMuscleGroup(dayName: string, muscleGroupName: string) {
-        const addExerciseButton = RoutineDetailObjects.getAddExerciseButtonForMuscleGroup(dayName, muscleGroupName);
-        await addExerciseButton.scrollIntoView();
+    public async tapExercisesForDay(dayName: string) {
+        const exercisesButton = RoutineDetailObjects.getExercisesButtonForDay(dayName);
+
+        let attempts = 0;
+        while (attempts < 5) {
+            const isDisplayed = await exercisesButton.isDisplayed().catch(() => false);
+            if (isDisplayed) {
+                break;
+            }
+            try {
+                await browser.swipe({ direction: 'up', percent: 0.3 });
+                await browser.pause(500);
+            } catch {
+                // ignore
+            }
+            attempts += 1;
+        }
+
+        await exercisesButton.scrollIntoView();
         await browser.pause(500);
-        await expect(addExerciseButton).toBeDisplayed({ wait: 5000 });
-        await addExerciseButton.click();
+        await expect(exercisesButton).toBeDisplayed({ wait: 5000 });
+        await exercisesButton.click();
         await browser.pause(1000);
         return this;
     }
 
-    /**
-     * Verify that an exercise is displayed in a specific muscle group for a workout day
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
-     * @param muscleGroupName The muscle group name (e.g., "Chest")
-     * @param exerciseName The exercise name (e.g., "Bench Press")
-     */
-    public async verifyExerciseInMuscleGroup(dayName: string, muscleGroupName: string, exerciseName: string) {
-        const exerciseItem = RoutineDetailObjects.getExerciseItem(dayName, muscleGroupName, exerciseName);
-        await exerciseItem.scrollIntoView();
-        await browser.pause(500);
-        await expect(exerciseItem).toBeDisplayed({ wait: 5000 });
-        return this;
-    }
-
-    /**
-     * Tap on an exercise item to open the manage exercise screen
-     * @param dayName The day name (e.g., "Day 2: Wednesday Upper A")
-     * @param muscleGroupName The muscle group name (e.g., "Chest")
-     * @param exerciseName The exercise name (e.g., "Bench Press")
-     */
-    public async tapExerciseItem(dayName: string, muscleGroupName: string, exerciseName: string) {
-        const exerciseItem = RoutineDetailObjects.getExerciseItem(dayName, muscleGroupName, exerciseName);
-        await exerciseItem.scrollIntoView();
-        await browser.pause(500);
-        await expect(exerciseItem).toBeDisplayed({ wait: 5000 });
-        await exerciseItem.click();
-        await browser.pause(1000);
-        return this;
-    }
 }
 
 export default new RoutineDetailPage();

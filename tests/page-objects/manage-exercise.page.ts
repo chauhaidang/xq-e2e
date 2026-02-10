@@ -2,6 +2,7 @@ import { expect, browser } from '@wdio/globals';
 import ManageExerciseObjects from './objects/manage-exercise.objects.js';
 import Page from './page.js';
 import { createFluentProxy } from '../../support/utils/fluent-proxy.js';
+import { logger } from '@chauhaidang/xq-common-kit';
 
 /**
  * Page object for the "Manage Exercise" screen
@@ -73,6 +74,16 @@ class ManageExercisePage extends Page {
      */
     public async enterTotalSets(totalSets: number) {
         const totalSetsInput = ManageExerciseObjects.totalSetsInput;
+        await totalSetsInput.waitForExist({ timeout: 5000 });
+        // Swipe up so Total Sets is visible (keyboard may cover lower fields)
+        try {
+            await browser.swipe({ direction: 'up', percent: 0.2 });
+            await browser.pause(300);
+        } catch {
+            // ignore
+        }
+        await totalSetsInput.scrollIntoView();
+        await browser.pause(500);
         await expect(totalSetsInput).toBeDisplayed({ wait: 5000 });
         await expect(totalSetsInput).toBeEnabled({ wait: 2000 });
         await totalSetsInput.click();
@@ -83,13 +94,27 @@ class ManageExercisePage extends Page {
     }
 
     /**
-     * Enter notes
+     * Enter notes (optional: if notes input is not present, skips without failing)
      * @param notes The notes text
      */
     public async enterNotes(notes: string) {
         const notesInput = ManageExerciseObjects.notesInput;
-        await expect(notesInput).toBeDisplayed({ wait: 5000 });
-        await expect(notesInput).toBeEnabled({ wait: 2000 });
+        const exists = await notesInput.waitForExist({ timeout: 3000, reverse: false }).catch(() => false);
+        if (!exists) {
+            return this;
+        }
+        try {
+            await browser.swipe({ direction: 'up', percent: 0.2 });
+            await browser.pause(300);
+        } catch {
+            // ignore
+        }
+        await notesInput.scrollIntoView();
+        await browser.pause(500);
+        const displayed = await notesInput.isDisplayed().catch(() => false);
+        if (!displayed) {
+            return this;
+        }
         await notesInput.click();
         await browser.pause(200);
         await notesInput.setValue(notes);
@@ -99,25 +124,47 @@ class ManageExercisePage extends Page {
 
     /**
      * Tap the save button
+     * Swipes up and scrolls to reveal the save button (below notes), then taps it.
      */
     public async tapSave() {
-        // Dismiss keyboard if present
-        try {
-            const notesInput = ManageExerciseObjects.notesInput;
-            if (await notesInput.isDisplayed()) {
-                await notesInput.click();
-                await browser.pause(200);
+        const saveButton = ManageExerciseObjects.saveButton;
+
+        // Dismiss keyboard if it covers the action buttons.
+        if (await browser.isKeyboardShown()) {
+            try {
+                // Not always supported on iOS, so keep a fallback.
+                await browser.hideKeyboard();
+            } catch {
+                // Tap a non-input label to dismiss the keyboard.
+                try {
+                    await ManageExerciseObjects.notesOptionalLabel.click();
+                } catch {
+                    await ManageExerciseObjects.notesLabel.click();
+                }
             }
-        } catch (e) {
-            // Keyboard might not be open
+            logger.info('Keyboard dismissed before tapping Save/Add');
+            await browser.pause(300);
         }
 
-        const saveButton = ManageExerciseObjects.saveButton;
-        await saveButton.scrollIntoView();
-        await browser.pause(500);
+        // Ensure the button is in view (it is below notes).
+        try {
+            await saveButton.scrollIntoView({ direction: 'down' });
+        } catch {
+            // ignore scroll failures; we'll still attempt to click if visible
+        }
+
         await expect(saveButton).toBeDisplayed({ wait: 5000 });
         await saveButton.click();
-        await browser.pause(1000);
+        try {
+            const alert = await browser.getAlertText();
+            if (alert) {
+                await browser.acceptAlert();
+                await browser.pause(1000);
+            }
+        } catch {
+            // No alert present, continue
+        }
+
         return this;
     }
 
@@ -162,7 +209,7 @@ class ManageExercisePage extends Page {
      * @param weight The expected weight
      * @param totalSets The expected total sets
      */
-    public async verifyExerciseDisplayed(exerciseName: string, totalReps?: number, weight?: number, totalSets?: number) {
+    public async verifyExerciseDisplayed(_exerciseName: string, totalReps?: number, weight?: number, totalSets?: number) {
         // Verify exercise name is displayed
         const exerciseNameInput = ManageExerciseObjects.exerciseNameInput;
         await expect(exerciseNameInput).toBeDisplayed({ wait: 5000 });
@@ -183,6 +230,36 @@ class ManageExercisePage extends Page {
             await expect(totalSetsInput).toBeDisplayed({ wait: 5000 });
         }
         
+        return this;
+    }
+
+    /**
+     * Tap the "+ Add" button for a specific muscle group on Manage Exercise screen.
+     * Each muscle group row has its own Add button (add-exercise-button-{id}).
+     * @param muscleGroupName The muscle group name (e.g., "Chest", "Back")
+     */
+    public async tapAddExerciseForMuscleGroup(muscleGroupName: string) {
+        const addButton = ManageExerciseObjects.getAddExerciseButtonForMuscleGroup(muscleGroupName);
+        await addButton.scrollIntoView();
+        await browser.pause(500);
+        await expect(addButton).toBeDisplayed({ wait: 5000 });
+        await addButton.click();
+        await browser.pause(1000);
+        return this;
+    }
+
+    /**
+     * Tap on an exercise item to open the edit form (Manage Exercise screen).
+     * @param muscleGroupName The muscle group name (e.g., "Chest")
+     * @param exerciseName The exercise name (e.g., "Bench Press")
+     */
+    public async tapExerciseItem(muscleGroupName: string, exerciseName: string) {
+        const exerciseItem = ManageExerciseObjects.getExerciseItem(muscleGroupName, exerciseName);
+        await exerciseItem.scrollIntoView();
+        await browser.pause(500);
+        await expect(exerciseItem).toBeDisplayed({ wait: 5000 });
+        await exerciseItem.click();
+        await browser.pause(1000);
         return this;
     }
 

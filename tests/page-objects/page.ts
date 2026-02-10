@@ -1,6 +1,7 @@
 import { browser } from '@wdio/globals'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+
 /**
 * main page object containing all methods, selectors and functionality
 * that is shared across all page objects

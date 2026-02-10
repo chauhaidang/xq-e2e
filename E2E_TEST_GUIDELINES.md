@@ -241,7 +241,7 @@ export default new RoutineTasks();
 ```typescript
 import RoutineTasks from './tasks/routine.tasks.js';
 import WorkoutDayTasks from './tasks/workout-day.tasks.js';
-import * as kit from '@chauhaidang/xq-js-common-kit';
+import * as kit from '@chauhaidang/xq-common-kit';
 import {Configuration, RoutinesApi} from 'xq-fitness-write-client';
 
 describe('Manage Routine', () => {

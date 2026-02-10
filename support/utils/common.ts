@@ -1,3 +1,61 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+/**
+ * Captures the current page source (DOM) and screenshot to the artifacts directory.
+ * Call this whenever you need to debug or inspect the current page state.
+ *
+ * @param options.prefix - Optional filename prefix for unique captures (e.g. 'step-1' → page-source-step-1.xml)
+ * @param options.pageSourceFileName - Optional explicit page source filename (e.g. 'my-test.xml')
+ * @param options.screenshotFileName - Optional explicit screenshot filename (e.g. 'my-test.png')
+ * @param options.logToConsole - Whether to log capture paths to console (default: true)
+ * @returns Object with pageSourcePath and screenshotPath, or undefined if capture failed
+ */
+export async function capturePageSourceAndScreenshot(options?: {
+    prefix?: string;
+    pageSourceFileName?: string;
+    screenshotFileName?: string;
+    logToConsole?: boolean;
+}): Promise<{ pageSourcePath: string; screenshotPath: string } | undefined> {
+    const { prefix = '', pageSourceFileName, screenshotFileName, logToConsole = true } = options ?? {};
+    const { browser } = await import('@wdio/globals');
+
+    try {
+        const pageSource = await browser.getPageSource();
+        const artifactsDir = path.join(process.cwd(), 'artifacts');
+        const domCapturesDir = path.join(artifactsDir, 'dom-captures');
+        const screenshotsDir = path.join(artifactsDir, 'screenshots');
+        const logsDir = path.join(artifactsDir, 'logs');
+
+        [domCapturesDir, screenshotsDir, logsDir].forEach((dir) => {
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+        });
+
+        const suffix = prefix ? `-${prefix}` : '';
+        const domFile = pageSourceFileName ?? `page-source${suffix}.xml`;
+        const screenshotFile = screenshotFileName ?? `screenshot${suffix}.png`;
+        const pageSourcePath = path.join(domCapturesDir, domFile);
+        const screenshotPath = path.join(screenshotsDir, screenshotFile);
+
+        fs.writeFileSync(pageSourcePath, pageSource);
+        const image = await browser.takeScreenshot();
+        fs.writeFileSync(screenshotPath, Buffer.from(image, 'base64'));
+
+        if (logToConsole) {
+            console.log('\n========== PAGE CAPTURE ==========');
+            console.log(`Page source: ${pageSourcePath}`);
+            console.log(`Screenshot: ${screenshotPath}`);
+            console.log('==================================\n');
+        }
+
+        return { pageSourcePath, screenshotPath };
+    } catch (err) {
+        console.log('Could not capture page source and screenshot:', err);
+        return undefined;
+    }
+}
 
 /**
  * Get the time difference in seconds

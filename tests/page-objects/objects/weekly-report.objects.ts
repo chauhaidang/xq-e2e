@@ -122,12 +122,12 @@ class WeeklyReportObjects {
     }
 
     /**
-     * Get total weight text for an exercise
+     * Get weight (kg) text for an exercise
      * @param exerciseName The exercise name (e.g., "Bench Press")
-     * @param totalWeight The expected total weight value
+     * @param weightKg The expected weight value (kg)
      */
-    public getTotalWeightText(exerciseName: string, totalWeight: number) {
-        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-") and contains(@label, "${exerciseName}")]//XCUIElementTypeStaticText[contains(@label, "${totalWeight}")]`);
+    public getWeightKgText(exerciseName: string, weightKg: number) {
+        return $(`//XCUIElementTypeOther[starts-with(@name, "exercise-total-") and contains(@label, "${exerciseName}")]//XCUIElementTypeStaticText[contains(@label, "${weightKg} kg")]`);
     }
 }
 

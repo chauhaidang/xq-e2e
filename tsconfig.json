@@ -29,6 +29,7 @@
         "config",
         "page-objects",
         "support",
-        "scripts"
+        "scripts",
+        "types"
     ]
 }

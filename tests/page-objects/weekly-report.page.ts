@@ -140,9 +140,9 @@ class WeeklyReportPage extends Page {
      * Verify that an exercise total is displayed with specific values
      * @param exerciseName The exercise name (e.g., "Bench Press")
      * @param totalReps The expected total reps
-     * @param totalWeight The expected total weight
+     * @param weightKg The expected weight (kg)
      */
-    public async verifyExerciseTotalDisplayed(exerciseName: string, totalReps: number, totalWeight: number) {
+    public async verifyExerciseTotalDisplayed(exerciseName: string, totalReps: number, weightKg: number) {
         const exerciseTotal = WeeklyReportObjects.getExerciseTotalByName(exerciseName);
         await exerciseTotal.scrollIntoView();
         await browser.pause(500);
@@ -156,9 +156,9 @@ class WeeklyReportPage extends Page {
         const totalRepsText = WeeklyReportObjects.getTotalRepsText(exerciseName, totalReps);
         await expect(totalRepsText).toBeDisplayed({ wait: 3000 });
         
-        // Verify total weight is displayed
-        const totalWeightText = WeeklyReportObjects.getTotalWeightText(exerciseName, totalWeight);
-        await expect(totalWeightText).toBeDisplayed({ wait: 3000 });
+        // Verify weight (kg) is displayed
+        const weightKgText = WeeklyReportObjects.getWeightKgText(exerciseName, weightKg);
+        await expect(weightKgText).toBeDisplayed({ wait: 3000 });
         
         return this;
     }
@@ -180,7 +180,7 @@ class WeeklyReportPage extends Page {
         for (let i = 0; i < 100; i++) { // Max 100 exercises
             try {
                 const exerciseTotal = WeeklyReportObjects.getExerciseTotalByIndex(i);
-                if (await exerciseTotal.isDisplayed({ timeout: 1000 })) {
+                if (await exerciseTotal.isDisplayed()) {
                     actualCount++;
                 } else {
                     break;
